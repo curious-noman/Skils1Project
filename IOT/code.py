@@ -13,16 +13,16 @@ import ssl
 import adafruit_minimqtt.adafruit_minimqtt as MQTT
 
 # WiFi settings
-WIFI_SSID = "Paschal's Galaxy A13"
-WIFI_PASSWORD = "zaus7880"
+WIFI_SSID = ""
+WIFI_PASSWORD = ""
 
 # MQTT settings
 MQTT_BROKER = "io.adafruit.com"
 MQTT_PORT = 1883
 MQTT_TOPIC = "AzisLover69/feeds/joysxtick2"
-MQTT_CLIENT_ID = "rfid_reader"
-MQTT_USER = "AzisLover69"
-MQTT_PASSWORD = "aio_bwkm95prGUEuDRN1euy4UrmuadF5"
+MQTT_CLIENT_ID = ""
+MQTT_USER = ""
+MQTT_PASSWORD = ""
 
 # Connect to WiFi
 print(f"Connecting to {WIFI_SSID}...")

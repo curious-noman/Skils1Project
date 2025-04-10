@@ -13,18 +13,18 @@ import ssl
 import adafruit_minimqtt.adafruit_minimqtt as MQTT
 
 # WiFi settings
-WIFI_SSID = "diestseweg"
-WIFI_PASSWORD = "Diest11Weg"
+WIFI_SSID = ""
+WIFI_PASSWORD = ""
 
 
 # MQTT settings
-MQTT_BROKER = "io.adafruit.com"
+MQTT_BROKER = ""
 MQTT_PORT = 1883
-MQTT_TOPIC_KEYS = "AzisLover69/feeds/keys"
-MQTT_TOPIC_JOYSTICK = "AzisLover69/feeds/joystick"
-MQTT_CLIENT_ID = "rfid_reader"
-MQTT_USER = "AzisLover69"
-MQTT_PASSWORD = "aio_bwkm95prGUEuDRN1euy4UrmuadF5"
+MQTT_TOPIC_KEYS = ""
+MQTT_TOPIC_JOYSTICK = ""
+MQTT_CLIENT_ID = ""
+MQTT_USER = ""
+MQTT_PASSWORD = ""
 
 # Connect to WiFi
 print(f"Connecting to {WIFI_SSID}...")

@@ -44,7 +44,7 @@ def cast_rays():
         
 running = True
 while running:
-    # screen.fill((0, 0, 0))
+    screen.fill((0, 0, 0))
     
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
