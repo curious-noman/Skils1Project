@@ -1,0 +1,26 @@
+[
+    {
+        "question": "how big is the moon",
+        "answer": "very big",
+        "attackPower": 1,
+        "wrong_choice1": "big",
+        "wrong_choice2": "veery big",
+        "wrong_choice3": "huge"
+    },
+    {
+        "question": "Wanna steal the moon",
+        "answer": "yes",
+        "attackPower": 1,
+        "wrong_choice1": "no",
+        "wrong_choice2": "maybe",
+        "wrong_choice3": "keep me out of this"
+    },
+    {
+        "question": "How many iterations did it take for maddie and caspian to be reunited",
+        "answer": "117649",
+        "attackPower": 1,
+        "wrong_choice1": "117512",
+        "wrong_choice2": "12000615",
+        "wrong_choice3": "4"
+    }
+]
