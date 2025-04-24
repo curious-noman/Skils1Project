@@ -10,7 +10,11 @@ btn2.pull = digitalio.Pull.UP
 
 i = 0
 while True:
-    if not btn2.value or not btn1.value:
-        print(f"On {i}")
+    if not btn1.value:
+        print(f"On {i} UP")
+        i += 1
+        time.sleep(1)
+    if not btn2.value:
+        print(f"On {i} DOWN")
         i += 1
         time.sleep(1)
