@@ -29,15 +29,14 @@ player = {"name": "clu&blu", "hp": 5, "attack": 1, "defense": 0, "speed": 8}
 enemy = {"name": "Ratata", "hp": 3, "attack": 1, "defense": 0, "speed": 6}
 
 
-def dameged():
-    global shake_duration, shake_intensity
-    if shake_duration > 0:
-        offset_x = random.randint(-shake_intensity, shake_intensity)
-        offset_y = random.randint(-shake_intensity, shake_intensity)
-        screen.blit(oponent_image, (offset_x, offset_y))
-        shake_duration -= 1
-    else:
-        screen.blit(oponent_image, enemy_position)  # Reset position
+def update_animations(dt):
+    global is_shaking, shake_intensity, shake_duration
+    
+    if is_shaking:
+        shake_duration -= dt
+        if shake_duration <= 0:
+            is_shaking = False
+
 
 
 class Button:
@@ -127,6 +126,13 @@ def ask_question():
         message = "No questions available!"
         battle_state = "enemy_turn"
     create_buttons()
+    
+    
+def start_shake(intensity, duration):
+    global is_shaking, shake_intensity, shake_duration
+    is_shaking = True
+    shake_intensity = intensity
+    shake_duration = duration
         
 def check_answer():
     """Check if player's answer is correct before attacking."""
@@ -146,22 +152,30 @@ def check_answer():
         correct = True
         
     if correct:
+        
         damage = current_question["attackPower"]
         enemy["hp"] -= damage
         message = f"✅ Correct! {player['name']} attacks for {damage} damage!"
-        
+        start_shake(5,  1.2)  # intensity=5, duration=0.3 seconds
+
+    
         if enemy["hp"] <= 0:
             enemy["hp"] = 0
             battle_state = "won"
         else:
             battle_state = "enemy_turn"
+            
+    
     else:
         message = "❌ Wrong answer! No attack this turn."
         battle_state = "enemy_turn"
+    
+
 
     player_answer = ""
     current_question = None
     create_buttons()
+
     
 def player_attack():
     global battle_state, message
@@ -207,7 +221,6 @@ try:
     heart = pygame.image.load('images/heart.png')
     heart_image = pygame.transform.scale(heart, (40, 40)) 
 except:
-    # Create a placeholder if image not found
     heart_image = pygame.Surface((40, 40))
     heart_image.fill((255, 0, 0))
     
@@ -215,35 +228,51 @@ try:
     oponent = pygame.image.load('images/try_oponent.png')
     oponent_image = pygame.transform.scale(oponent, (160, 240)) 
 except:
-    # Create a placeholder if image not found
+    # placeholder 
     oponent_image = pygame.Surface((160, 240))
     oponent_image.fill((150, 150, 150))
+
+try:
+    hit = pygame.image.load('images/hit_effect.png')
+    hit_image = pygame.transform.scale(hit, (120, 100)) 
+except:
+    # placeholder 
+    hit_image = pygame.Surface((160, 240))
+    hit_image.fill((150, 150, 150))
+
+
 
 def draw_hearts(x, y, hp):
     for i in range(hp):  
         screen.blit(heart_image, (x + i * 45, y)) 
 
 def draw_battle():
-    screen.fill((0, 0, 50))  # baaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaackground
+    screen.fill((0, 0, 50))  # background
 
-    # iiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiinfo
     draw_text(f"{player['name']}:", (50, 50), (255, 255, 255))
     draw_hearts(150, 40, player["hp"]) 
 
     draw_text(f"{enemy['name']}: ", (1500, 50), (255, 255, 255))
     draw_hearts(1590, 40, enemy["hp"])
 
-    # messsssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssage
+    # Draw message
     draw_text(message, (50, 850), (255, 255, 0))
     
-    # enemy image
-    screen.blit(oponent_image, enemy_position)
+    draw_x, draw_y = enemy_position
+    if is_shaking:
+        draw_x += random.randint(-shake_intensity, shake_intensity)
+        draw_y += random.randint(-shake_intensity, shake_intensity)
+        flash = pygame.Surface(oponent_image.get_size(), pygame.SRCALPHA)
+        flash.fill((255, 0, 0, 50))  
+        screen.blit(oponent_image, (draw_x, draw_y))
+        screen.blit(flash, (draw_x, draw_y))
+    else:
+        screen.blit(oponent_image, (draw_x, draw_y))
      
-    #  boooooooooooooooooooox
+
     pygame.draw.rect(screen, (0, 0, 100), (50, 900, 700, 150))  
     pygame.draw.rect(screen, (255, 255, 255), (50, 900, 700, 150), 3) 
-
-    # buuuuuuuuuuuuuuuuuuuuuuuuuuuuuttons
+    screen.blit(hit_image, (150, 400))
     for button in buttons:
         button.draw(screen)
 
@@ -256,7 +285,14 @@ create_buttons()
 
 # Main game loop
 running = True
+last_time = pygame.time.get_ticks()
 while running:
+    current_time = pygame.time.get_ticks()
+    dt = (current_time - last_time) / 1000.0  # Delta time in seconds
+    last_time = current_time
+    
+    update_animations(dt)
+    
     mouse_pos = pygame.mouse.get_pos()
     
     for event in pygame.event.get():
