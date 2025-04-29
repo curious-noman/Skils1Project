@@ -53,13 +53,12 @@ def save_questions(questions):
 #     if cont != "yes":
 #         break
 class InputBox:
-    input_border_img = pygame.image.load('images/input_border.png')
-    input_border_active_img = pygame.image.load('images/input_border_active.png')
+    input_img = pygame.image.load('images/input.png')  # Using your uploaded image
+
     def __init__(self, x, y, w, h, text=''):
         self.rect = pygame.Rect(x, y, w, h)
         self.text = text
         self.active = False
-        # Remove self.color since we're using an image
 
     def handle_event(self, event):
         if event.type == pygame.MOUSEBUTTONDOWN:
@@ -74,28 +73,28 @@ class InputBox:
         return False
 
     def draw(self, screen):
-        # Draw the image border instead of rectangle
-        img = input_border_active_img if self.active else input_border_img
-        screen.blit(img, (self.rect.x, self.rect.y))
-        screen.blit(input_border_img, (self.rect.x, self.rect.y))
+        # Draw the input image
+        screen.blit(pygame.transform.scale(self.input_img, (self.rect.width, self.rect.height)), (self.rect.x, self.rect.y))
+        
+        # Draw the text
         text_surface = font.render(self.text, True, pygame.Color('black'))
-        screen.blit(text_surface, (self.rect.x + 5, self.rect.y + 5))
+        screen.blit(text_surface, (self.rect.x + 30, self.rect.y + 17))
 
 
 def main():
-    question_box = InputBox(700, 200, 600, 40)
-    attack_box = InputBox(700, 300, 600, 40)
-    answer_box = InputBox(700, 400, 600, 40)
-    choice_box1 = InputBox(700, 500, 600, 40)
-    choice_box2 = InputBox(700, 600, 600, 40)
-    choice_box3 = InputBox(700, 700, 600, 40)
+    question_box = InputBox(700, 200, 700, 90)
+    attack_box = InputBox(700, 300, 700, 90)
+    answer_box = InputBox(700, 400, 700, 90)
+    choice_box1 = InputBox(700, 500, 700, 90)
+    choice_box2 = InputBox(700, 600, 700, 90)
+    choice_box3 = InputBox(700, 700, 700, 90)
     
 
     save_image = pygame.image.load('images/save.png')
     
     save_image = pygame.transform.scale(save_image, (120, 50))
 
-    save_button = pygame.Rect(850, 800, 200, 50)
+    save_button = pygame.Rect(890, 800, 200, 50)
 
     labels = [
         {"text": "Question:", "position": (700, 170)},

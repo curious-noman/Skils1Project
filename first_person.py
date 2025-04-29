@@ -11,18 +11,111 @@ def load_questions():
     except FileNotFoundError:
         return [] 
 
+
+#veeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeriables
 questions_list = load_questions()  
 current_question = None 
 player_answer = ""  
 choices = []
-right_answer=None
-def ask_question():
+right_answer = None
+buttons = []  # List to store button rectangles and actions
 
+is_shaking = False  
+shake_duration = 0
+shake_intensity = 0
+enemy_position = (1100, 270)  
+
+player = {"name": "clu&blu", "hp": 5, "attack": 1, "defense": 0, "speed": 8}
+enemy = {"name": "Ratata", "hp": 3, "attack": 1, "defense": 0, "speed": 6}
+
+
+def dameged():
+    global shake_duration, shake_intensity
+    if shake_duration > 0:
+        offset_x = random.randint(-shake_intensity, shake_intensity)
+        offset_y = random.randint(-shake_intensity, shake_intensity)
+        screen.blit(oponent_image, (offset_x, offset_y))
+        shake_duration -= 1
+    else:
+        screen.blit(oponent_image, enemy_position)  # Reset position
+
+
+class Button:
+    def __init__(self, x, y, width, height, text, action=None, color=(100, 100, 100), hover_color=(150, 150, 150)):
+        self.rect = pygame.Rect(x, y, width, height)
+        self.text = text
+        self.action = action
+        self.color = color
+        self.hover_color = hover_color
+        self.is_hovered = False
+        
+    def draw(self, screen):
+        color = self.hover_color if self.is_hovered else self.color
+        pygame.draw.rect(screen, color, self.rect)
+        pygame.draw.rect(screen, (255, 255, 255), self.rect, 2)
+        
+        text_surface = font.render(self.text, True, (255, 255, 255))
+        text_rect = text_surface.get_rect(center=self.rect.center)
+        screen.blit(text_surface, text_rect)
+        
+    def check_hover(self, pos):
+        self.is_hovered = self.rect.collidepoint(pos)
+        return self.is_hovered
+        
+    def handle_event(self, event):
+        if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1 and self.is_hovered:
+            if self.action:
+                self.action()
+            return True
+        return False
+
+def create_buttons():
+    global buttons
+    buttons = []
+    
+    if battle_state == "player_turn":
+        if current_question:
+            # Answer buttons
+            if choices:
+                buttons.append(Button(50, 920, 300, 50, f"A: {choices[0]}", lambda: select_answer(0)))
+                buttons.append(Button(400, 920, 300, 50, f"B: {choices[1]}", lambda: select_answer(1)))
+                buttons.append(Button(50, 980, 300, 50, f"C: {choices[2]}", lambda: select_answer(2)))
+                buttons.append(Button(400, 980, 300, 50, f"D: {choices[3]}", lambda: select_answer(3)))
+        else:
+            # Action buttons
+            buttons.append(Button(50, 920, 300, 50, "Attack", player_attack_init))
+            buttons.append(Button(400, 920, 300, 50, "Defend", player_defend))
+    elif battle_state in ["won", "lost"]:
+        buttons.append(Button(50, 920, 300, 50, "Continue", end_battle))
+
+def select_answer(index):
+    global player_answer
+    if 0 <= index < len(choices):
+        player_answer = chr(ord('A') + index)
+        check_answer()
+
+def player_attack_init():
+    global current_question, message
+    ask_question()
+    create_buttons()  # Recreate buttons for answer selection
+
+def player_defend():
+    global battle_state, message
+    player["defense"] += 2  
+    message = f"{player['name']} defends!"
+    battle_state = "enemy_turn"
+    create_buttons()
+
+def end_battle():
+    global running
+    running = False
+
+def ask_question():
     global current_question, message, choices, right_answer 
     if questions_list:
         current_question = random.choice(questions_list)
         message = current_question["question"]
-        right_answer = current_question["answer"]  #glooooble vr
+        right_answer = current_question["answer"]
         choices = [
             current_question["answer"], 
             current_question["wrong_choice1"],
@@ -33,13 +126,14 @@ def ask_question():
     else:
         message = "No questions available!"
         battle_state = "enemy_turn"
+    create_buttons()
         
 def check_answer():
     """Check if player's answer is correct before attacking."""
     global battle_state, message, player_answer, right_answer, current_question
 
     correct = False
-    if not player_answer or not current_question:  # Check if we have a question
+    if not player_answer or not current_question:
         return
 
     # Check multiple choice answers
@@ -67,45 +161,10 @@ def check_answer():
 
     player_answer = ""
     current_question = None
-    
-    
-    
-pygame.init()
-SCREEN_WIDTH = 1920
-SCREEN_HEIGHT = 1080
-screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
-pygame.display.set_caption("Pokémon-like Battle")
-clock = pygame.time.Clock()
-font = pygame.font.Font(None, 36)
-
-
-#playeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeers
-player = {"name": "clu&blu", "hp": 5, "attack": 1, "defense": 0, "speed": 8}
-enemy = {"name": "Ratata", "hp": 3, "attack": 1, "defense": 0, "speed": 6}
-
-
-battle_state = "player_turn"  # "player_turn", "enemy_turn", "won", "lost"
-message = "What will you do?"
-
-
-#heart img 
-heart = pygame.image.load('images/heart.png')
-heart_image = pygame.transform.scale(heart, (40, 40)) 
-def draw_hearts(x, y, hp):
-    for i in range(hp):  
-        screen.blit(heart_image, (x + i * 45, y)) 
-
-def ability():
-    global message
-    message = "do you wanna use an ability" 
-    draw_text("No", (70, 920), (200, 200, 200))
-    draw_text("Yes", (400, 920), (200, 200, 200))
-    
+    create_buttons()
     
 def player_attack():
     global battle_state, message
-    
-    answer1 =random
     damage = max(1, player["attack"] - enemy["defense"] // 2)
     enemy["hp"] -= damage
     message = f"{player['name']} attacks for {damage} damage!"
@@ -114,6 +173,7 @@ def player_attack():
         battle_state = "won"
     else:
         battle_state = "enemy_turn"
+    create_buttons()
 
 def enemy_turn():
     global battle_state, message
@@ -125,91 +185,120 @@ def enemy_turn():
         battle_state = "lost"
     else:
         battle_state = "player_turn"
+    create_buttons()
+
+# Initialize pygame
+pygame.init()
+SCREEN_WIDTH = 1920
+SCREEN_HEIGHT = 1080
+screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
+pygame.display.set_caption("Pokémon-like Battle")
+clock = pygame.time.Clock()
+font = pygame.font.Font(None, 36)
+
+# Player and enemy data
+
+
+battle_state = "player_turn"  # "player_turn", "enemy_turn", "won", "lost"
+message = "What will you do?"
+
+# Load images
+try:
+    heart = pygame.image.load('images/heart.png')
+    heart_image = pygame.transform.scale(heart, (40, 40)) 
+except:
+    # Create a placeholder if image not found
+    heart_image = pygame.Surface((40, 40))
+    heart_image.fill((255, 0, 0))
+    
+try:
+    oponent = pygame.image.load('images/try_oponent.png')
+    oponent_image = pygame.transform.scale(oponent, (160, 240)) 
+except:
+    # Create a placeholder if image not found
+    oponent_image = pygame.Surface((160, 240))
+    oponent_image.fill((150, 150, 150))
+
+def draw_hearts(x, y, hp):
+    for i in range(hp):  
+        screen.blit(heart_image, (x + i * 45, y)) 
 
 def draw_battle():
-  
-    screen.fill((0, 0, 50))  # Dark blue background
+    screen.fill((0, 0, 50))  # baaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaackground
 
+    # iiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiinfo
     draw_text(f"{player['name']}:", (50, 50), (255, 255, 255))
     draw_hearts(150, 40, player["hp"]) 
 
     draw_text(f"{enemy['name']}: ", (1500, 50), (255, 255, 255))
     draw_hearts(1590, 40, enemy["hp"])
 
+    # messsssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssage
     draw_text(message, (50, 850), (255, 255, 0))
-
+    
+    # enemy image
+    screen.blit(oponent_image, enemy_position)
      
+    #  boooooooooooooooooooox
     pygame.draw.rect(screen, (0, 0, 100), (50, 900, 700, 150))  
     pygame.draw.rect(screen, (255, 255, 255), (50, 900, 700, 150), 3) 
 
-    # Show typed answer if there's a question
-    if current_question:
-        draw_text(player_answer, (70, 950), (255, 255, 255))  # Player's input
-        
-        # Draw multiple choice options
-        if 'choices' in globals() and choices:
-            draw_text(f"A: {choices[0]}", (70, 920), (200, 200, 200))
-            draw_text(f"B: {choices[1]}", (400, 920), (200, 200, 200))
-            draw_text(f"C: {choices[2]}", (70, 970), (200, 200, 200))
-            draw_text(f"D: {choices[3]}", (400, 970), (200, 200, 200))
-
-    elif battle_state == "player_turn":
-        
-        draw_text("[1] Attack                    [2] Defend", (70, 920), (200, 200, 200))
-    
-    elif battle_state in ["won", "lost"]:
-        draw_text("Press SPACE to continue...", (50, 920), (200, 200, 200))
-
+    # buuuuuuuuuuuuuuuuuuuuuuuuuuuuuttons
+    for button in buttons:
+        button.draw(screen)
 
 def draw_text(text, pos, color=(255, 255, 255)):
     text_surface = font.render(text, True, color)
     screen.blit(text_surface, pos)
-    
-    
+
+# Initial button setup
+create_buttons()
+
+# Main game loop
 running = True
 while running:
+    mouse_pos = pygame.mouse.get_pos()
+    
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
 
+        # Handle button hover
+        for button in buttons:
+            button.check_hover(mouse_pos)
+            
+        # Handle button clicks
+        if event.type == pygame.MOUSEBUTTONDOWN:
+            for button in buttons:
+                if button.handle_event(event):
+                    break
+        
+        # Keyboard handling (keeps original functionality)
         if event.type == pygame.KEYDOWN:
             if battle_state == "player_turn":
                 if event.key == pygame.K_1:  # Attack
-                    ability()  # Ask if the player wants to use an ability
-                    ask_question()  # Ask a question first
+                    player_attack_init()
                 elif event.key == pygame.K_2:  # Defend
-                    player["defense"] += 2  
-                    message = f"{player['name']} defends!"
-                    battle_state = "enemy_turn"
-                
-                # Handle answer input
-                elif current_question:  # Only if we're answering a question
+                    player_defend()
+                elif current_question:  # Only if answering a question
                     if event.key == pygame.K_RETURN:  # Submit answer
                         check_answer()
                     elif event.key == pygame.K_BACKSPACE:
                         player_answer = player_answer[:-1]
                     elif event.key in (pygame.K_a, pygame.K_b, pygame.K_c, pygame.K_d):
-                        # Convert key to A/B/C/D
                         player_answer = chr(event.key).upper()
-                        check_answer()  # Immediately check
-                        break
-                    elif event.key in (pygame.K_1, pygame.K_2, pygame.K_3, pygame.K_4):
-                        # Ignore number keys while answering
-                        pass
-                    else:
-                        # For typing full answers
+                        check_answer()
+                    elif event.key not in (pygame.K_1, pygame.K_2, pygame.K_3, pygame.K_4):
                         player_answer += event.unicode
 
             if event.key == pygame.K_ESCAPE:
                 running = False  
-
             elif battle_state in ["won", "lost"] and event.key == pygame.K_SPACE:
                 running = False
 
-    
-    # Enemy t
+    # Enemy turn
     if battle_state == "enemy_turn":
-        if  player["defense"] > 0:
+        if player["defense"] > 0:
             player["defense"] = 0
         pygame.time.delay(1000)  
         enemy_turn()
