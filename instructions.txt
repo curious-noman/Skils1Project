@@ -1,0 +1,3 @@
+use the level_builder.py to make levels 
+the levels are saved as Json files
+run the command python play_level.py "path to the json file"
