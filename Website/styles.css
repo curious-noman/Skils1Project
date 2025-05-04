@@ -1,13 +1,15 @@
 /* Color variables based on logo colors */
 :root {
-    --bg-dark: #1a1a2e; /* Deep space blue */
-    --bg-medium: #16213e; /* Slightly lighter navy */
-    --bg-light: #0f3460;  /* Darker blue for accents/cards */
-    --text-primary: #e0f2f7; /* Light cyan/off-white */
-    --text-secondary: #a7c5eb; /* Lighter muted blue */
-    --accent-neon: #39ff14; /* Neon green */
-    --accent-secondary: #ff073a; /* Neon red/pink */
+    --bg-dark: #1a132f;          /* Deep eggplant (main background) */
+    --bg-medium: #2c1e4a;        /* Rich purple (section background) */
+    --bg-light: #3e2a61;         /* Lighter purple (cards/accent areas) */
+    --text-primary: #f5e9ff;     /* Very light lavender (main text) */
+    --text-secondary: #c4a7e7;   /* Muted lilac (subtext) */
+    --accent-neon: #d782ff;      /* Bright violet (primary accent) */
+    --accent-secondary: #ff6ac1; /* Pinkish-purple (hover/secondary accent) */
     --border-color: var(--accent-neon);
+    --text-highlight: #ffe56d; /* Warm, glowing yellow for emphasis */
+
 }
 
 /* Keyframe animation for neon glow */
@@ -165,7 +167,7 @@ nav a:hover {
 .section-header h2 {
     font-size: 2.5rem;
     margin-bottom: 15px;
-    color: var(--accent-neon);
+    color: var(--text-highlight);
     animation: neon-glow 2.5s ease-in-out infinite;
 }
 
