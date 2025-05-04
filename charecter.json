@@ -1,0 +1,35 @@
+{
+    "enemies": [
+      {
+        "name": "Ratata",
+        "hp": 3,
+        "attack": 1,
+        "defense": 0,
+        "speed": 6,
+        "image": "ratata.png"
+      },
+      {
+        "name": "Goblin",
+        "hp": 5,
+        "attack": 2,
+        "defense": 1,
+        "speed": 4,
+        "image": "goblin.png"
+      }
+    ],
+    "players": [
+      {
+        "name": "clu&blu",
+        "hp": 5,
+        "attack": 1,
+        "defense": 0,
+        "speed": 8,
+        "image": "wizard.png",
+        "abilities": {
+          "Heal": {"uses": 2, "effect": "heal", "amount": 2},
+          "Fireball": {"uses": 3, "effect": "damage", "amount": 3},
+          "Shield": {"uses": 1, "effect": "defense", "amount": 2}
+        }
+      }
+    ]
+  }

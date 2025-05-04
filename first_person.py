@@ -13,29 +13,61 @@ def load_questions():
 
 
 #veeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeriables
+
+Q_time = 45
 questions_list = load_questions()  
 current_question = None 
 player_answer = ""  
 choices = []
 right_answer = None
-buttons = []  # List to store button rectangles and actions
+buttons = []  
+show_abilities_condetion = False
 
 is_shaking = False  
 shake_duration = 0
 shake_intensity = 0
-enemy_position = (1100, 270)  
+enemy_position = (1100, 370) 
 
-player = {"name": "clu&blu", "hp": 5, "attack": 1, "defense": 0, "speed": 8}
+is_wand_shaking = False
+wand_shake_duration = 0
+wand_shake_intensity = 0
+wand_position = (1300, 650)
+
+ 
+abilities={
+        "Heal": {"uses": 2, "effect": "heal", "amount": 2},
+        "Fireball": {"uses": 3, "effect": "damage", "amount": 3},
+        "Shield": {"uses": 1, "effect": "defense", "amount": 2}
+    }
+player = {
+    "name": "clu&blu", 
+    "hp": 5, 
+    "attack": 1, 
+    "defense": 0, 
+    "speed": 8,
+    "abilities": abilities
+}
 enemy = {"name": "Ratata", "hp": 3, "attack": 1, "defense": 0, "speed": 6}
-
 
 def update_animations(dt):
     global is_shaking, shake_intensity, shake_duration
+    global is_wand_shaking, wand_shake_duration, battle_state
+    
+    if is_wand_shaking:
+        wand_shake_duration -= dt
+        if wand_shake_duration <= 0:
+            is_wand_shaking = False
+            
+            is_shaking = True
+            shake_duration = 1.1  
     
     if is_shaking:
         shake_duration -= dt
         if shake_duration <= 0:
             is_shaking = False
+            
+            battle_state = "enemy_turn"
+            create_buttons()
 
 
 
@@ -68,24 +100,66 @@ class Button:
             return True
         return False
 
+
+
 def create_buttons():
     global buttons
     buttons = []
     
     if battle_state == "player_turn":
         if current_question:
-            # Answer buttons
+    
             if choices:
                 buttons.append(Button(50, 920, 300, 50, f"A: {choices[0]}", lambda: select_answer(0)))
                 buttons.append(Button(400, 920, 300, 50, f"B: {choices[1]}", lambda: select_answer(1)))
                 buttons.append(Button(50, 980, 300, 50, f"C: {choices[2]}", lambda: select_answer(2)))
                 buttons.append(Button(400, 980, 300, 50, f"D: {choices[3]}", lambda: select_answer(3)))
+                
+        elif  show_abilities_condetion:
+            if abilities:
+                y_pos = 920  
+                for ability, details in player["abilities"].items():
+                    if details["uses"] > 0:
+                        buttons.append(Button(50, y_pos, 300, 50, 
+                                           f"{ability} ({details['uses']})", 
+                                           lambda a=ability: use_ability(a)))
+                        y_pos += 60
+                
+                buttons.append(Button(400, 920, 300, 50, "Back", show_abilities))
         else:
-            # Action buttons
+                # Show normal action buttons when abilities panel is closed
             buttons.append(Button(50, 920, 300, 50, "Attack", player_attack_init))
-            buttons.append(Button(400, 920, 300, 50, "Defend", player_defend))
+            buttons.append(Button(400, 920, 300, 50, "Abilities", show_abilities))
+                
     elif battle_state in ["won", "lost"]:
         buttons.append(Button(50, 920, 300, 50, "Continue", end_battle))
+        
+        
+        
+def use_ability(ability_name):
+    global battle_state, message, show_abilities_condetion, is_wand_shaking, wand_shake_duration
+    
+    
+    if ability_name in player["abilities"] and player["abilities"][ability_name]["uses"] > 0:
+        # Start wand shaking
+        is_wand_shaking = True
+        wand_shake_duration = 1.1  
+        
+        ability = player["abilities"][ability_name]
+        ability["uses"] -= 1
+        
+        if ability["effect"] == "heal":
+            player["hp"] += ability["amount"]
+            message = f"{player['name']} used {ability_name}! Healed {ability['amount']} HP!"
+        elif ability["effect"] == "damage":
+            enemy["hp"] -= ability["amount"]
+            message = f"{player['name']} used {ability_name}! Dealt {ability['amount']} damage!"
+        elif ability["effect"] == "defense":
+            player["defense"] += ability["amount"]
+            message = f"{player['name']} used {ability_name}! Defense increased by {ability['amount']}!"
+        
+        show_abilities_condetion = False
+        create_buttons()
 
 def select_answer(index):
     global player_answer
@@ -100,8 +174,8 @@ def player_attack_init():
 
 def player_defend():
     global battle_state, message
-    player["defense"] += 2  
-    message = f"{player['name']} defends!"
+    player["defense"] += 2  # Increase defense
+    message = f"{player['name']} defends! Defense increased by 2!"
     battle_state = "enemy_turn"
     create_buttons()
 
@@ -127,7 +201,11 @@ def ask_question():
         battle_state = "enemy_turn"
     create_buttons()
     
-    
+def show_abilities():
+    global show_abilities_condetion
+    show_abilities_condetion = not show_abilities_condetion 
+    print("show_abilities", show_abilities) 
+    create_buttons()
 def start_shake(intensity, duration):
     global is_shaking, shake_intensity, shake_duration
     is_shaking = True
@@ -191,14 +269,17 @@ def player_attack():
 
 def enemy_turn():
     global battle_state, message
-    damage = max(1, enemy["attack"] - player["defense"] // 2)
+    damage = max(1, enemy["attack"] - player["defense"])
     player["hp"] -= damage
+    player["defense"] = 0  # Reset defense after each turn
     message = f"{enemy['name']} attacks for {damage} damage!"
+
     if player["hp"] <= 0:
         player["hp"] = 0
         battle_state = "lost"
     else:
         battle_state = "player_turn"
+        
     create_buttons()
 
 # Initialize pygame
@@ -232,22 +313,27 @@ except:
     oponent_image = pygame.Surface((160, 240))
     oponent_image.fill((150, 150, 150))
 
-try:
-    hit = pygame.image.load('images/hit_effect.png')
-    hit_image = pygame.transform.scale(hit, (120, 100)) 
-except:
-    # placeholder 
-    hit_image = pygame.Surface((160, 240))
-    hit_image.fill((150, 150, 150))
+BP = pygame.image.load('images/background_wild_westF.png')
+BP_image = pygame.transform.scale(BP, (SCREEN_WIDTH, SCREEN_HEIGHT)) 
+
+Wand= pygame.image.load('images/maic_wand.png')
+wand_image = pygame.transform.scale(Wand, (530, 530)) 
 
 
 
 def draw_hearts(x, y, hp):
     for i in range(hp):  
         screen.blit(heart_image, (x + i * 45, y)) 
-
+        
+        
 def draw_battle():
-    screen.fill((0, 0, 50))  # background
+    screen.blit(BP_image, (0, 0)) 
+
+    wand_x, wand_y = wand_position
+    if is_wand_shaking:
+        wand_x += random.randint(-15, 15)
+        wand_y += random.randint(-15, 15)
+    screen.blit(wand_image, (wand_x, wand_y))
 
     draw_text(f"{player['name']}:", (50, 50), (255, 255, 255))
     draw_hearts(150, 40, player["hp"]) 
@@ -258,6 +344,7 @@ def draw_battle():
     # Draw message
     draw_text(message, (50, 850), (255, 255, 0))
     
+    # Draw enemy
     draw_x, draw_y = enemy_position
     if is_shaking:
         draw_x += random.randint(-shake_intensity, shake_intensity)
@@ -269,10 +356,11 @@ def draw_battle():
     else:
         screen.blit(oponent_image, (draw_x, draw_y))
      
-
+    # Draw action box
     pygame.draw.rect(screen, (0, 0, 100), (50, 900, 700, 150))  
     pygame.draw.rect(screen, (255, 255, 255), (50, 900, 700, 150), 3) 
-    screen.blit(hit_image, (150, 400))
+    
+    # Draw buttons
     for button in buttons:
         button.draw(screen)
 
@@ -284,64 +372,98 @@ def draw_text(text, pos, color=(255, 255, 255)):
 create_buttons()
 
 # Main game loop
-running = True
-last_time = pygame.time.get_ticks()
-while running:
-    current_time = pygame.time.get_ticks()
-    dt = (current_time - last_time) / 1000.0  # Delta time in seconds
-    last_time = current_time
+def run_game():
+    # Initialize game state
+    global running, battle_state, message, player, enemy
+    running = True
+    battle_state = "player_turn"
+    message = "What will you do?"
     
-    update_animations(dt)
+    # Reset player and enemy stats
+    player = {
+    "name": "clu&blu", 
+    "hp": 5, 
+    "attack": 1, 
+    "defense": 0, 
+    "speed": 8,
+    "abilities": {
+        "Heal": {"uses": 2, "effect": "heal", "amount": 2},
+        "Fireball": {"uses": 3, "effect": "damage", "amount": 3},
+        "Shield": {"uses": 1, "effect": "defense", "amount": 2}
+    }
+}
+    enemy = {"name": "Ratata", "hp": 3, "attack": 1, "defense": 0, "speed": 6}
     
-    mouse_pos = pygame.mouse.get_pos()
+    create_buttons()
     
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            running = False
-
-        # Handle button hover
-        for button in buttons:
-            button.check_hover(mouse_pos)
-            
-        # Handle button clicks
-        if event.type == pygame.MOUSEBUTTONDOWN:
-            for button in buttons:
-                if button.handle_event(event):
-                    break
+    # Main game loop
+    last_time = pygame.time.get_ticks()
+    while running:
+        screen.blit(BP_image, (0, 0)) 
+        current_time = pygame.time.get_ticks()
+        dt = (current_time - last_time) / 1000.0  # Delta time in seconds
+        last_time = current_time
         
-        # Keyboard handling (keeps original functionality)
-        if event.type == pygame.KEYDOWN:
-            if battle_state == "player_turn":
-                if event.key == pygame.K_1:  # Attack
-                    player_attack_init()
-                elif event.key == pygame.K_2:  # Defend
-                    player_defend()
-                elif current_question:  # Only if answering a question
-                    if event.key == pygame.K_RETURN:  # Submit answer
-                        check_answer()
-                    elif event.key == pygame.K_BACKSPACE:
-                        player_answer = player_answer[:-1]
-                    elif event.key in (pygame.K_a, pygame.K_b, pygame.K_c, pygame.K_d):
-                        player_answer = chr(event.key).upper()
-                        check_answer()
-                    elif event.key not in (pygame.K_1, pygame.K_2, pygame.K_3, pygame.K_4):
-                        player_answer += event.unicode
-
-            if event.key == pygame.K_ESCAPE:
-                running = False  
-            elif battle_state in ["won", "lost"] and event.key == pygame.K_SPACE:
+        update_animations(dt)
+        
+        mouse_pos = pygame.mouse.get_pos()
+        
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
                 running = False
 
-    # Enemy turn
-    if battle_state == "enemy_turn":
-        if player["defense"] > 0:
-            player["defense"] = 0
-        pygame.time.delay(1000)  
-        enemy_turn()
-    
-    draw_battle()
-    pygame.display.flip()
-    clock.tick(60)
+            # Handle button hover
+            for button in buttons:
+                button.check_hover(mouse_pos)
+                
+            # Handle button clicks
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                for button in buttons:
+                    if button.handle_event(event):
+                        break
+            
+            # Keyboard handling (keeps original functionality)
+            if event.type == pygame.KEYDOWN:
+                if battle_state == "player_turn":
+                    if event.key == pygame.K_1:  # Attack
+                        player_attack_init()
+                    elif event.key == pygame.K_2:  # Defend
+                        player_defend()
+                    elif current_question:  # Only if answering a question
+                        if event.key == pygame.K_RETURN:  # Submit answer
+                            check_answer()
+                        elif event.key == pygame.K_BACKSPACE:
+                            player_answer = player_answer[:-1]
+                        elif event.key in (pygame.K_a, pygame.K_b, pygame.K_c, pygame.K_d):
+                            player_answer = chr(event.key).upper()
+                            check_answer()
+                        elif event.key not in (pygame.K_1, pygame.K_2, pygame.K_3, pygame.K_4):
+                            player_answer += event.unicode
 
-pygame.quit()
-sys.exit()
+                if event.key == pygame.K_ESCAPE:
+                    running = False  
+                elif battle_state in ["won", "lost"] and event.key == pygame.K_SPACE:
+                    running = False
+
+        # Enemy turn
+        if battle_state == "enemy_turn":
+            if player["defense"] > 0:
+                player["defense"] = 0
+            pygame.time.delay(1000)  
+            enemy_turn()
+        
+        draw_battle()
+        pygame.display.flip()
+        clock.tick(60)
+
+if __name__ == "__main__":
+    # Only run if executed directly (not when imported)
+    pygame.init()
+    SCREEN_WIDTH = 1920
+    SCREEN_HEIGHT = 1080
+    screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
+  
+    font = pygame.font.Font(None, 36)
+    run_game()
+    pygame.quit()
+    sys.exit()
