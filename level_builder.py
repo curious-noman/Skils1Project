@@ -692,7 +692,12 @@ class LevelBuilder:
         temp_level = os.path.join(self.level_dir, "_temp_level.json")
         level_data = {
             "platforms": [],
+            "small_platforms": [],
             "hazards": [],
+            "bounce_pads": [],
+            "checkpoints": [],
+            "moving_platforms": [],
+            "breakable_blocks": [],
             "player_start": None
         }
 
@@ -708,11 +713,49 @@ class LevelBuilder:
                     "width": self.grid.grid_size,
                     "height": self.grid.grid_size
                 })
+            elif cell["type"] == "small_platform":
+                level_data["small_platforms"].append({
+                    "x": x,
+                    "y": y + self.grid.grid_size // 2,
+                    "width": self.grid.grid_size,
+                    "height": self.grid.grid_size // 2
+                })
             elif cell["type"] == "hazard":
                 level_data["hazards"].append({
                     "x": x,
                     "y": y,
                     "size": self.grid.grid_size
+                })
+            elif cell["type"] == "bounce":
+                level_data["bounce_pads"].append({
+                    "x": x,
+                    "y": y + 3 * self.grid.grid_size // 4,
+                    "width": self.grid.grid_size,
+                    "height": self.grid.grid_size // 4
+                })
+            elif cell["type"] == "checkpoint":
+                level_data["checkpoints"].append({
+                    "x": x,
+                    "y": y,
+                    "width": self.grid.grid_size,
+                    "height": self.grid.grid_size
+                })
+            elif cell["type"] == "moving_platform":
+                level_data["moving_platforms"].append({
+                    "x": x,
+                    "y": y + self.grid.grid_size // 2,
+                    "width": self.grid.grid_size,
+                    "height": self.grid.grid_size // 2,
+                    "move_distance": 120,  # Default movement distance
+                    "move_speed": 2,  # Default movement speed
+                    "move_axis": "horizontal"  # Default movement axis
+                })
+            elif cell["type"] == "breakable":
+                level_data["breakable_blocks"].append({
+                    "x": x,
+                    "y": y,
+                    "width": self.grid.grid_size,
+                    "height": self.grid.grid_size
                 })
             elif cell["type"] == "player":
                 level_data["player_start"] = {
