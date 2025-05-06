@@ -256,30 +256,41 @@ nav a:hover {
     padding: 80px 0;
     background-color: var(--bg-medium);
     border-bottom: 2px solid var(--border-color);
+    color: var(--text-highlight);
 }
 
 .feature-cards {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
     gap: 30px;
+    color: var(--text-highlight);
 }
 
 .feature-card {
-    background-color: var(--bg-light);
-    border-radius: 0;
-    overflow: hidden;
-    border: 2px solid var(--border-color);
-    box-shadow: none;
-    transition: transform 0.3s;
+    background-color: #4d3777;
+    border: 2px solid var(--accent-neon);
+    box-shadow: 0 0 10px rgba(215, 130, 255, 0.2);
+    color: var(--text-highlight) !important; /* Makes all text yellow by default */
+}
+.feature-card,
+.feature-card * {
+    color: var(--text-highlight) !important;
+}
+.feature-content p {
+    color: var(--text-highlight);
 }
 
+.feature-card:hover {
+    transform: scale(1.03);
+    box-shadow: 0 0 20px rgba(215, 130, 255, 0.4);
+}
 .feature-card:hover {
     transform: scale(1.03);
 }
 
 .feature-image {
     height: 200px;
-    background-color: var(--bg-dark); /* Or maybe a placeholder pattern */
+    background-color: var(--bg-dark);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -287,13 +298,13 @@ nav a:hover {
 
 .feature-content {
     padding: 25px;
+    color: var(--text-highlight);
 }
 
 .feature-content h3 {
-    color: var(--accent-neon);
-    margin-bottom: 15px;
-    font-size: 1.5rem;
+    color: var(--text-highlight); /* Ensures headings stay yellow */
 }
+
 
 /* Wand section */
 .wand-section {
@@ -528,4 +539,28 @@ footer {
         flex-direction: column;
         gap: 30px;
     }
+}
+.section:nth-of-type(even) {
+    background-color: var(--text-highlight);
+    color: var(--bg-medium);
+}
+
+.section:nth-of-type(even) h2,
+.section:nth-of-type(even) h3,
+.section:nth-of-type(even) p,
+.section:nth-of-type(even) .btn,
+.section:nth-of-type(even) .feature-content h3,
+.section:nth-of-type(even) .testimonial-author {
+    color: var(--bg-medium);
+}
+
+.section:nth-of-type(even) .btn {
+    background-color: var(--bg-medium);
+    border-color: var(--bg-medium);
+    color: var(--text-highlight);
+}
+
+.section:nth-of-type(even) .btn:hover {
+    background-color: var(--accent-secondary);
+    color: var(--bg-dark);
 }
