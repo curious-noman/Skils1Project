@@ -189,33 +189,50 @@ class Grid:
         self.grid_width = width // grid_size
         self.grid_height = height // grid_size
         self.player_pos = None
+        # For scrolling - make the actual grid larger than visible area
+        self.total_width = self.grid_width * 3  # 3x wider than visible
+        self.total_height = self.grid_height * 3  # 3x taller than visible
+        self.camera_offset = pygame.Vector2(0, 0)
 
     def draw(self, surface):
         # Draw grid background
         pygame.draw.rect(surface, WHITE, self.rect)
 
-        # Draw grid lines
-        for x in range(0, self.grid_width + 1):
+        # Calculate visible range based on camera offset
+        start_x = int(self.camera_offset.x // self.grid_size)
+        start_y = int(self.camera_offset.y // self.grid_size)
+        end_x = start_x + self.grid_width + 1
+        end_y = start_y + self.grid_height + 1
+
+        # Draw grid lines adjusted for camera offset
+        for x in range(start_x, end_x):
+            screen_x = self.rect.x + (x * self.grid_size) - self.camera_offset.x
             pygame.draw.line(
                 surface,
                 LIGHT_GRAY,
-                (self.rect.x + x * self.grid_size, self.rect.y),
-                (self.rect.x + x * self.grid_size, self.rect.y + self.rect.height)
+                (screen_x, self.rect.y),
+                (screen_x, self.rect.y + self.rect.height)
             )
 
-        for y in range(0, self.grid_height + 1):
+        for y in range(start_y, end_y):
+            screen_y = self.rect.y + (y * self.grid_size) - self.camera_offset.y
             pygame.draw.line(
                 surface,
                 LIGHT_GRAY,
-                (self.rect.x, self.rect.y + y * self.grid_size),
-                (self.rect.x + self.rect.width, self.rect.y + y * self.grid_size)
+                (self.rect.x, screen_y),
+                (self.rect.x + self.rect.width, screen_y)
             )
 
-        # Draw placed tiles
+        # Draw placed tiles adjusted for camera offset
         for pos, cell in self.cells.items():
             grid_x, grid_y = pos
-            x = self.rect.x + grid_x * self.grid_size
-            y = self.rect.y + grid_y * self.grid_size
+            x = self.rect.x + (grid_x * self.grid_size) - self.camera_offset.x
+            y = self.rect.y + (grid_y * self.grid_size) - self.camera_offset.y
+
+            # Skip tiles that are outside the visible area
+            if (x + self.grid_size < self.rect.x or x > self.rect.right or
+                    y + self.grid_size < self.rect.y or y > self.rect.bottom):
+                continue
 
             if cell["type"] == "platform":
                 pygame.draw.rect(
@@ -260,7 +277,7 @@ class Grid:
                 pygame.draw.rect(
                     surface,
                     cell["color"],
-                    pygame.Rect(x, y, self.grid_size, 10)
+                    pygame.Rect(x, y, 10, self.grid_size)
                 )
             elif cell["type"] == "moving_platform":
                 pygame.draw.rect(
@@ -334,10 +351,11 @@ class Grid:
         rel_x = mouse_pos[0] - self.rect.x
         rel_y = mouse_pos[1] - self.rect.y
 
-        grid_x = rel_x // self.grid_size
-        grid_y = rel_y // self.grid_size
+        # Adjust for camera offset
+        grid_x = int((rel_x + self.camera_offset.x) // self.grid_size)
+        grid_y = int((rel_y + self.camera_offset.y) // self.grid_size)
 
-        if 0 <= grid_x < self.grid_width and 0 <= grid_y < self.grid_height:
+        if 0 <= grid_x < self.total_width and 0 <= grid_y < self.total_height:
             return (grid_x, grid_y)
         return None
 
@@ -372,7 +390,11 @@ class LevelBuilder:
     def __init__(self):
         # UI elements
         sidebar_width = 200
-
+        self.camera_offset = pygame.Vector2(0, 0)
+        self.dragging_grid = False
+        self.last_mouse_pos = None
+        self.scroll_speed = 15  # Speed of scrolling
+        
         self.grid = Grid(
             sidebar_width + 10,
             10,
@@ -380,6 +402,36 @@ class LevelBuilder:
             SCREEN_HEIGHT - 80,
             GRID_SIZE
         )
+        
+        # Scrollbar dimensions
+        self.h_scrollbar = pygame.Rect(
+            sidebar_width + 10, 
+            SCREEN_HEIGHT - 70,
+            SCREEN_WIDTH - sidebar_width - 20, 
+            20
+        )
+        self.v_scrollbar = pygame.Rect(
+            SCREEN_WIDTH - 20, 
+            10,
+            20, 
+            SCREEN_HEIGHT - 80
+        )
+        
+        self.h_scroll_thumb = pygame.Rect(
+            sidebar_width + 10,
+            SCREEN_HEIGHT - 70,
+            100,  # Will be calculated properly
+            20
+        )
+        self.v_scroll_thumb = pygame.Rect(
+            SCREEN_WIDTH - 20,
+            10,
+            20,
+            60  # Will be calculated properly
+        )
+        
+        self.dragging_h_thumb = False
+        self.dragging_v_thumb = False
 
         self.tile_selector = TileSelector(
             10,
@@ -446,6 +498,15 @@ class LevelBuilder:
 
         # Draw grid
         self.grid.draw(surface)
+        
+        # Update scroll thumb positions based on camera offset
+        self._update_scroll_thumbs()
+        
+        # Draw scrollbars
+        pygame.draw.rect(surface, GRAY, self.h_scrollbar)
+        pygame.draw.rect(surface, GRAY, self.v_scrollbar)
+        pygame.draw.rect(surface, WHITE, self.h_scroll_thumb)
+        pygame.draw.rect(surface, WHITE, self.v_scroll_thumb)
 
         # Draw UI elements
         self.tile_selector.draw(surface)
@@ -458,8 +519,46 @@ class LevelBuilder:
         text_surf = font.render(f"File: {self.current_filename}", True, WHITE)
         surface.blit(text_surf, (10, SCREEN_HEIGHT - 90))
 
+    def _update_scroll_thumbs(self):
+        # Calculate horizontal thumb size and position
+        visible_width_ratio = self.grid.grid_width / self.grid.total_width
+        h_thumb_width = max(40, int(visible_width_ratio * self.h_scrollbar.width))
+        
+        # Calculate position based on camera offset
+        max_h_offset = (self.grid.total_width - self.grid.grid_width) * self.grid.grid_size
+        h_thumb_x = self.h_scrollbar.x
+        if max_h_offset > 0:
+            h_offset_ratio = self.grid.camera_offset.x / max_h_offset
+            h_thumb_x += int(h_offset_ratio * (self.h_scrollbar.width - h_thumb_width))
+        
+        self.h_scroll_thumb = pygame.Rect(
+            h_thumb_x,
+            self.h_scrollbar.y,
+            h_thumb_width,
+            self.h_scrollbar.height
+        )
+        
+        # Calculate vertical thumb size and position
+        visible_height_ratio = self.grid.grid_height / self.grid.total_height
+        v_thumb_height = max(40, int(visible_height_ratio * self.v_scrollbar.height))
+        
+        # Calculate position based on camera offset
+        max_v_offset = (self.grid.total_height - self.grid.grid_height) * self.grid.grid_size
+        v_thumb_y = self.v_scrollbar.y
+        if max_v_offset > 0:
+            v_offset_ratio = self.grid.camera_offset.y / max_v_offset
+            v_thumb_y += int(v_offset_ratio * (self.v_scrollbar.height - v_thumb_height))
+        
+        self.v_scroll_thumb = pygame.Rect(
+            self.v_scrollbar.x,
+            v_thumb_y,
+            self.v_scrollbar.width,
+            v_thumb_height
+        )
+
     def handle_input(self):
         mouse_pos = pygame.mouse.get_pos()
+        current_mouse_pos = pygame.mouse.get_pos()
 
         # Check button hover states
         self.save_button.check_hover(mouse_pos)
@@ -473,26 +572,82 @@ class LevelBuilder:
 
             # Handle mouse button down
             if event.type == MOUSEBUTTONDOWN:
-                # Check if clicked on tile selector
-                if self.tile_selector.handle_click(mouse_pos):
-                    pass
-                # Check if clicked on grid
-                elif self.grid.rect.collidepoint(mouse_pos):
+                # Middle mouse button for drag scrolling
+                if event.button == 2 and self.grid.rect.collidepoint(mouse_pos):
+                    self.dragging_grid = True
+                    self.last_mouse_pos = mouse_pos
+                
+                # Check for scrollbar dragging
+                elif event.button == 1:
+                    # Check if clicked on horizontal scrollbar thumb
+                    if self.h_scroll_thumb.collidepoint(mouse_pos):
+                        self.dragging_h_thumb = True
+                        self.last_mouse_pos = mouse_pos
+                    
+                    # Check if clicked on vertical scrollbar thumb
+                    elif self.v_scroll_thumb.collidepoint(mouse_pos):
+                        self.dragging_v_thumb = True
+                        self.last_mouse_pos = mouse_pos
+                    
+                    # Check if clicked on horizontal scrollbar (not on thumb)
+                    elif self.h_scrollbar.collidepoint(mouse_pos):
+                        # Click to the left or right of thumb for page scroll
+                        if mouse_pos[0] < self.h_scroll_thumb.x:
+                            self.grid.camera_offset.x = max(0, self.grid.camera_offset.x - self.grid.rect.width)
+                        else:
+                            max_h_offset = (self.grid.total_width - self.grid.grid_width) * self.grid.grid_size
+                            self.grid.camera_offset.x = min(max_h_offset, self.grid.camera_offset.x + self.grid.rect.width)
+                    
+                    # Check if clicked on vertical scrollbar (not on thumb)
+                    elif self.v_scrollbar.collidepoint(mouse_pos):
+                        # Click above or below thumb for page scroll
+                        if mouse_pos[1] < self.v_scroll_thumb.y:
+                            self.grid.camera_offset.y = max(0, self.grid.camera_offset.y - self.grid.rect.height)
+                        else:
+                            max_v_offset = (self.grid.total_height - self.grid.grid_height) * self.grid.grid_size
+                            self.grid.camera_offset.y = min(max_v_offset, self.grid.camera_offset.y + self.grid.rect.height)
+                    
+                    # Check if clicked on tile selector
+                    elif self.tile_selector.handle_click(mouse_pos):
+                        pass
+                    
+                    # Check if clicked on grid
+                    elif self.grid.rect.collidepoint(mouse_pos):
+                        grid_pos = self.grid.get_grid_pos(mouse_pos)
+
+                        # Left click to place tile
+                        if self.tile_selector.selected_tile:
+                            self.is_dragging = True
+                            tile = self.tile_selector.selected_tile
+                            self.grid.place_tile(grid_pos, tile["type"], tile["color"])
+                
+                # Right click to remove tile
+                elif event.button == 3 and self.grid.rect.collidepoint(mouse_pos):
+                    self.is_dragging = "remove"
                     grid_pos = self.grid.get_grid_pos(mouse_pos)
-
-                    # Left click to place tile
-                    if event.button == 1 and self.tile_selector.selected_tile:
-                        self.is_dragging = True
-                        tile = self.tile_selector.selected_tile
-                        self.grid.place_tile(grid_pos, tile["type"], tile["color"])
-
-                    # Right click to remove tile
-                    elif event.button == 3:
-                        self.is_dragging = "remove"
-                        self.grid.remove_tile(grid_pos)
+                    self.grid.remove_tile(grid_pos)
+                
+                # Mouse wheel for scrolling
+                elif event.button == 4:  # Scroll Up
+                    if pygame.key.get_mods() & pygame.KMOD_SHIFT:
+                        # Horizontal scroll with Shift+Wheel
+                        self.grid.camera_offset.x = max(0, self.grid.camera_offset.x - self.scroll_speed)
+                    else:
+                        # Vertical scroll
+                        self.grid.camera_offset.y = max(0, self.grid.camera_offset.y - self.scroll_speed)
+                
+                elif event.button == 5:  # Scroll Down
+                    if pygame.key.get_mods() & pygame.KMOD_SHIFT:
+                        # Horizontal scroll with Shift+Wheel
+                        max_h_offset = (self.grid.total_width - self.grid.grid_width) * self.grid.grid_size
+                        self.grid.camera_offset.x = min(max_h_offset, self.grid.camera_offset.x + self.scroll_speed)
+                    else:
+                        # Vertical scroll
+                        max_v_offset = (self.grid.total_height - self.grid.grid_height) * self.grid.grid_size
+                        self.grid.camera_offset.y = min(max_v_offset, self.grid.camera_offset.y + self.scroll_speed)
 
                 # Check if clicked on buttons
-                elif self.save_button.is_clicked(mouse_pos, event):
+                if self.save_button.is_clicked(mouse_pos, event):
                     self.save_level()
                 elif self.load_button.is_clicked(mouse_pos, event):
                     self.load_level()
@@ -503,18 +658,70 @@ class LevelBuilder:
 
             # Handle mouse button up
             elif event.type == MOUSEBUTTONUP:
-                self.is_dragging = False
+                if event.button == 1:
+                    self.is_dragging = False
+                    self.dragging_h_thumb = False
+                    self.dragging_v_thumb = False
+                elif event.button == 2:
+                    self.dragging_grid = False
 
-            # Handle mouse motion while dragging
-            elif event.type == MOUSEMOTION and self.is_dragging:
-                grid_pos = self.grid.get_grid_pos(mouse_pos)
-
-                if grid_pos:
-                    if self.is_dragging == "remove":
-                        self.grid.remove_tile(grid_pos)
-                    else:
-                        tile = self.tile_selector.selected_tile
-                        self.grid.place_tile(grid_pos, tile["type"], tile["color"])
+            # Handle mouse motion
+            elif event.type == MOUSEMOTION:
+                # Handle grid dragging with middle mouse button
+                if self.dragging_grid and self.last_mouse_pos:
+                    dx = self.last_mouse_pos[0] - current_mouse_pos[0]
+                    dy = self.last_mouse_pos[1] - current_mouse_pos[1]
+                    
+                    # Update camera offset
+                    self.grid.camera_offset.x = max(0, min((self.grid.total_width - self.grid.grid_width) * self.grid.grid_size, 
+                                                         self.grid.camera_offset.x + dx))
+                    self.grid.camera_offset.y = max(0, min((self.grid.total_height - self.grid.grid_height) * self.grid.grid_size, 
+                                                         self.grid.camera_offset.y + dy))
+                    
+                    self.last_mouse_pos = current_mouse_pos
+                
+                # Handle horizontal scroll thumb dragging
+                elif self.dragging_h_thumb and self.last_mouse_pos:
+                    dx = current_mouse_pos[0] - self.last_mouse_pos[0]
+                    self.last_mouse_pos = current_mouse_pos
+                    
+                    # Calculate how far the thumb can move
+                    thumb_travel = self.h_scrollbar.width - self.h_scroll_thumb.width
+                    if thumb_travel > 0:
+                        # Calculate what percentage of the travel we've moved
+                        thumb_pos_ratio = (self.h_scroll_thumb.x - self.h_scrollbar.x + dx) / thumb_travel
+                        thumb_pos_ratio = max(0, min(1, thumb_pos_ratio))
+                        
+                        # Apply to camera offset
+                        max_h_offset = (self.grid.total_width - self.grid.grid_width) * self.grid.grid_size
+                        self.grid.camera_offset.x = thumb_pos_ratio * max_h_offset
+                
+                # Handle vertical scroll thumb dragging
+                elif self.dragging_v_thumb and self.last_mouse_pos:
+                    dy = current_mouse_pos[1] - self.last_mouse_pos[1]
+                    self.last_mouse_pos = current_mouse_pos
+                    
+                    # Calculate how far the thumb can move
+                    thumb_travel = self.v_scrollbar.height - self.v_scroll_thumb.height
+                    if thumb_travel > 0:
+                        # Calculate what percentage of the travel we've moved
+                        thumb_pos_ratio = (self.v_scroll_thumb.y - self.v_scrollbar.y + dy) / thumb_travel
+                        thumb_pos_ratio = max(0, min(1, thumb_pos_ratio))
+                        
+                        # Apply to camera offset
+                        max_v_offset = (self.grid.total_height - self.grid.grid_height) * self.grid.grid_size
+                        self.grid.camera_offset.y = thumb_pos_ratio * max_v_offset
+                
+                # Handle dragging to place/remove tiles
+                elif self.is_dragging and self.grid.rect.collidepoint(current_mouse_pos):
+                    grid_pos = self.grid.get_grid_pos(current_mouse_pos)
+                    
+                    if grid_pos:
+                        if self.is_dragging == "remove":
+                            self.grid.remove_tile(grid_pos)
+                        else:
+                            tile = self.tile_selector.selected_tile
+                            self.grid.place_tile(grid_pos, tile["type"], tile["color"])
 
         return True
 
@@ -533,8 +740,9 @@ class LevelBuilder:
 
         for pos, cell in self.grid.cells.items():
             grid_x, grid_y = pos
-            x = self.grid.rect.x + grid_x * self.grid.grid_size
-            y = self.grid.rect.y + grid_y * self.grid.grid_size
+            # Convert grid positions to world coordinates
+            x = grid_x * self.grid.grid_size
+            y = grid_y * self.grid.grid_size
 
             if cell["type"] == "platform":
                 level_data["platforms"].append({
@@ -662,21 +870,21 @@ class LevelBuilder:
 
         # Convert coordinates to grid positions and place tiles
         for platform in level_data["platforms"]:
-            grid_x = (platform["x"] - self.grid.rect.x) // self.grid.grid_size
-            grid_y = (platform["y"] - self.grid.rect.y) // self.grid.grid_size
+            grid_x = platform["x"] // self.grid.grid_size
+            grid_y = platform["y"] // self.grid.grid_size
 
             self.grid.place_tile((grid_x, grid_y), "platform", GREEN)
 
         for hazard in level_data["hazards"]:
-            grid_x = (hazard["x"] - self.grid.rect.x) // self.grid.grid_size
-            grid_y = (hazard["y"] - self.grid.rect.y) // self.grid.grid_size
+            grid_x = hazard["x"] // self.grid.grid_size
+            grid_y = hazard["y"] // self.grid.grid_size
 
             self.grid.place_tile((grid_x, grid_y), "hazard", GRAY)
 
         if level_data["player_start"]:
             start = level_data["player_start"]
-            grid_x = (start["x"] - self.grid.rect.x - self.grid.grid_size // 2) // self.grid.grid_size
-            grid_y = (start["y"] - self.grid.rect.y - self.grid.grid_size) // self.grid.grid_size
+            grid_x = (start["x"] - self.grid.grid_size // 2) // self.grid.grid_size
+            grid_y = (start["y"] - self.grid.grid_size) // self.grid.grid_size
 
             self.grid.place_tile((grid_x, grid_y), "player", BLUE)
 
