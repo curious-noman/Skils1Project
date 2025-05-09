@@ -11,11 +11,27 @@ def load_questions():
     except FileNotFoundError:
         return [] 
 
+def load_enemies():
+
+    """Load questions from JSON file."""
+    try:
+        with open("charecter.json", "r") as file:
+            return json.load(file)
+    except FileNotFoundError:
+        return [] 
 
 #veeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeriables
 
 Q_time = 45
-questions_list = load_questions()  
+time_remaining = 0
+timer_active = False
+timer_start = 0
+
+questions_list = load_questions()
+charecter_list = load_enemies()
+
+charecter_list=charecter_list[random.randint(0, len(charecter_list)-1)]
+
 current_question = None 
 player_answer = ""  
 choices = []
@@ -33,11 +49,12 @@ wand_shake_duration = 0
 wand_shake_intensity = 0
 wand_position = (1300, 650)
 
- 
+
+
 abilities={
-        "Heal": {"uses": 2, "effect": "heal", "amount": 2},
-        "Fireball": {"uses": 3, "effect": "damage", "amount": 3},
-        "Shield": {"uses": 1, "effect": "defense", "amount": 2}
+        "Heal": {"uses": 1, "effect": "heal", "amount": 2},
+        "Fireball": {"uses": 2, "effect": "damage", "amount": 3},
+        "Spear": {"uses": 1, "effect": "defense", "amount": 2}
     }
 player = {
     "name": "clu&blu", 
@@ -47,8 +64,9 @@ player = {
     "speed": 8,
     "abilities": abilities
 }
-enemy = {"name": "Ratata", "hp": 3, "attack": 1, "defense": 0, "speed": 6}
-
+enemy = {"name": charecter_list["name"], "hp":charecter_list["hp"],
+         "attack": charecter_list["attack"], "defense": charecter_list["defense"], "speed": charecter_list["speed"]}
+print("enemy", enemy)
 def update_animations(dt):
     global is_shaking, shake_intensity, shake_duration
     global is_wand_shaking, wand_shake_duration, battle_state
@@ -70,7 +88,25 @@ def update_animations(dt):
             create_buttons()
 
 
-
+def start_timer():
+    global timer_active, timer_start, time_remaining
+    timer_active = True
+    timer_start = pygame.time.get_ticks()
+    time_remaining = Q_time
+    
+def update_timer():
+    global time_remaining, timer_active, battle_state
+    if timer_active:
+        elapsed = (pygame.time.get_ticks() - timer_start) // 1000
+        time_remaining = max(0, Q_time - elapsed)
+        if time_remaining <= 0:
+            timer_active = False
+            # Handle time running out
+            if battle_state == "player_turn" and current_question:
+                global message
+                message = "Time's up! No attack this turn!"
+                battle_state = "enemy_turn"
+                create_buttons()
 class Button:
     def __init__(self, x, y, width, height, text, action=None, color=(100, 100, 100), hover_color=(150, 150, 150)):
         self.rect = pygame.Rect(x, y, width, height)
@@ -110,10 +146,10 @@ def create_buttons():
         if current_question:
     
             if choices:
-                buttons.append(Button(50, 920, 300, 50, f"A: {choices[0]}", lambda: select_answer(0)))
-                buttons.append(Button(400, 920, 300, 50, f"B: {choices[1]}", lambda: select_answer(1)))
-                buttons.append(Button(50, 980, 300, 50, f"C: {choices[2]}", lambda: select_answer(2)))
-                buttons.append(Button(400, 980, 300, 50, f"D: {choices[3]}", lambda: select_answer(3)))
+                buttons.append(Button(80, 920, 300, 50, f"A: {choices[0]}", lambda: select_answer(0)))
+                buttons.append(Button(430, 920, 300, 50, f"B: {choices[1]}", lambda: select_answer(1)))
+                buttons.append(Button(80, 980, 300, 50, f"C: {choices[2]}", lambda: select_answer(2)))
+                buttons.append(Button(430, 980, 300, 50, f"D: {choices[3]}", lambda: select_answer(3)))
                 
         elif  show_abilities_condetion:
             if abilities:
@@ -128,11 +164,11 @@ def create_buttons():
                 buttons.append(Button(400, 920, 300, 50, "Back", show_abilities))
         else:
                 # Show normal action buttons when abilities panel is closed
-            buttons.append(Button(50, 920, 300, 50, "Attack", player_attack_init))
-            buttons.append(Button(400, 920, 300, 50, "Abilities", show_abilities))
+            buttons.append(Button(80, 920, 300, 50, "Attack", player_attack_init))
+            buttons.append(Button(430, 920, 300, 50, "Abilities", show_abilities))
                 
     elif battle_state in ["won", "lost"]:
-        buttons.append(Button(50, 920, 300, 50, "Continue", end_battle))
+        buttons.append(Button(80, 920, 300, 50, "Continue", end_battle))
         
         
         
@@ -196,6 +232,7 @@ def ask_question():
             current_question["wrong_choice3"]
         ]
         random.shuffle(choices)
+        start_timer() 
     else:
         message = "No questions available!"
         battle_state = "enemy_turn"
@@ -306,8 +343,8 @@ except:
     heart_image.fill((255, 0, 0))
     
 try:
-    oponent = pygame.image.load('images/try_oponent.png')
-    oponent_image = pygame.transform.scale(oponent, (160, 240)) 
+    oponent = pygame.image.load(charecter_list['image'])
+    oponent_image = pygame.transform.scale(oponent, (400, 390)) 
 except:
     # placeholder 
     oponent_image = pygame.Surface((160, 240))
@@ -318,6 +355,8 @@ BP_image = pygame.transform.scale(BP, (SCREEN_WIDTH, SCREEN_HEIGHT))
 
 Wand= pygame.image.load('images/maic_wand.png')
 wand_image = pygame.transform.scale(Wand, (530, 530)) 
+box= pygame.image.load('images/box.png')
+box_image = pygame.transform.scale(box, (750, 240)) 
 
 
 
@@ -328,6 +367,8 @@ def draw_hearts(x, y, hp):
         
 def draw_battle():
     screen.blit(BP_image, (0, 0)) 
+        # Draw action box
+    screen.blit(box_image, (30, 820))
 
     wand_x, wand_y = wand_position
     if is_wand_shaking:
@@ -338,13 +379,16 @@ def draw_battle():
     draw_text(f"{player['name']}:", (50, 50), (255, 255, 255))
     draw_hearts(150, 40, player["hp"]) 
 
-    draw_text(f"{enemy['name']}: ", (1500, 50), (255, 255, 255))
+    draw_text(f"{enemy['name']}: ", (1510-len(enemy['name'])*6, 50), (255, 255, 255))
     draw_hearts(1590, 40, enemy["hp"])
 
     # Draw message
-    draw_text(message, (50, 850), (255, 255, 0))
+    draw_text(message, (50, 850), (100, 0, 255))
     
-    # Draw enemy
+    if current_question and timer_active:
+        timer_text = f"Time: {time_remaining}s"
+        draw_text(timer_text, (SCREEN_WIDTH/2, 50), (155, 55, 255))
+        
     draw_x, draw_y = enemy_position
     if is_shaking:
         draw_x += random.randint(-shake_intensity, shake_intensity)
@@ -356,9 +400,7 @@ def draw_battle():
     else:
         screen.blit(oponent_image, (draw_x, draw_y))
      
-    # Draw action box
-    pygame.draw.rect(screen, (0, 0, 100), (50, 900, 700, 150))  
-    pygame.draw.rect(screen, (255, 255, 255), (50, 900, 700, 150), 3) 
+
     
     # Draw buttons
     for button in buttons:
@@ -392,7 +434,8 @@ def run_game():
         "Shield": {"uses": 1, "effect": "defense", "amount": 2}
     }
 }
-    enemy = {"name": "Ratata", "hp": 3, "attack": 1, "defense": 0, "speed": 6}
+    enemy = {"name": charecter_list["name"], "hp":charecter_list["hp"],
+         "attack": charecter_list["attack"], "defense": charecter_list["defense"], "speed": charecter_list["speed"]}
     
     create_buttons()
     
@@ -405,7 +448,7 @@ def run_game():
         last_time = current_time
         
         update_animations(dt)
-        
+        update_timer() 
         mouse_pos = pygame.mouse.get_pos()
         
         for event in pygame.event.get():
