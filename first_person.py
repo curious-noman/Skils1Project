@@ -153,22 +153,42 @@ def create_buttons():
                 
         elif  show_abilities_condetion:
             if abilities:
-                y_pos = 920  
+                # Ability buttons grid layout
+                start_x = 80
+                start_y = 890
+                button_width = 300
+                button_height = 50
+                horizontal_spacing = 50
+                vertical_spacing = 60
+                max_per_row = 2
+                
+                row, col = 0, 0
                 for ability, details in player["abilities"].items():
                     if details["uses"] > 0:
-                        buttons.append(Button(50, y_pos, 300, 50, 
-                                           f"{ability} ({details['uses']})", 
-                                           lambda a=ability: use_ability(a)))
-                        y_pos += 60
+                        x = start_x + col * (button_width + horizontal_spacing)
+                        y = start_y + row * vertical_spacing
+                        buttons.append(Button(
+                            x, y, button_width, button_height,
+                            f"{ability} ({details['uses']})", 
+                            lambda a=ability: use_ability(a)
+                        ))
+                        col += 1
+                        if col >= max_per_row:
+                            col = 0
+                            row += 1
                 
-                buttons.append(Button(400, 920, 300, 50, "Back", show_abilities))
+                # Position Back button below the ability grid
+                back_button_y = start_y + (row + 1) * vertical_spacing -60
+                buttons.append(Button(
+                    430, back_button_y, 300, 50, "Back", show_abilities
+            ))
+            
         else:
-                # Show normal action buttons when abilities panel is closed
+            # Normal action buttons
             buttons.append(Button(80, 920, 300, 50, "Attack", player_attack_init))
             buttons.append(Button(430, 920, 300, 50, "Abilities", show_abilities))
-                
-    elif battle_state in ["won", "lost"]:
-        buttons.append(Button(80, 920, 300, 50, "Continue", end_battle))
+                    
+
         
         
         
@@ -430,7 +450,7 @@ def run_game():
     "speed": 8,
     "abilities": {
         "Heal": {"uses": 2, "effect": "heal", "amount": 2},
-        "Fireball": {"uses": 3, "effect": "damage", "amount": 3},
+        "Double Damege": {"uses": 3, "effect": "damage", "amount": 3},
         "Shield": {"uses": 1, "effect": "defense", "amount": 2}
     }
 }
