@@ -40,11 +40,30 @@ clock = pygame.time.Clock()
 class Player(pygame.sprite.Sprite):
     def __init__(self):
         super().__init__()
-        self.image = pygame.Surface((30, 50))
-        self.image.fill(BLUE)
+        # Load wizard sprites
+        self.sprites = []
+        # Increased player size from 30x50 to 60x100
+        PLAYER_WIDTH = 70
+        PLAYER_HEIGHT = 100
+        
+        for i in range(1, 9):  # wizard1.png to wizard8.png
+            try:
+                sprite = pygame.image.load(f"sprites/wizards{i}.png").convert_alpha()
+                # Scale to new larger size
+                sprite = pygame.transform.scale(sprite, (PLAYER_WIDTH, PLAYER_HEIGHT))
+                self.sprites.append(sprite)
+            except:
+                # Fallback if sprites not found
+                print(f"Warning: Could not load wizards{i}.png, using fallback")
+                surf = pygame.Surface((PLAYER_WIDTH, PLAYER_HEIGHT), pygame.SRCALPHA)
+                pygame.draw.rect(surf, BLUE, (0, 0, PLAYER_WIDTH, PLAYER_HEIGHT))
+                self.sprites.append(surf)
+        
+        self.current_sprite = 0
+        self.image = self.sprites[self.current_sprite]
         self.rect = self.image.get_rect()
-        self.start_pos = (0, 0)  # Will be set after loading level
-        self.reset_pos = (0, 0)  # Current checkpoint or start position
+        self.start_pos = (0, 0)
+        self.reset_pos = (0, 0)
         self.rect.center = self.start_pos
         self.velocity_y = 0
         self.velocity_x = 0
@@ -52,6 +71,10 @@ class Player(pygame.sprite.Sprite):
         self.coyote_timer = 0
         self.can_jump = False
         self.checkpoint_cooldown = 0
+        self.animation_timer = 0
+        self.animation_speed = 0.15  # Adjust for animation speed
+        self.facing_right = True
+        self.is_moving = False
 
     def reset_position(self):
         self.rect.midbottom = (self.reset_pos[0], self.reset_pos[1])
@@ -60,6 +83,9 @@ class Player(pygame.sprite.Sprite):
 
     def update(self, platforms, hazards, bounce_pads, checkpoints, moving_platforms, breakable_blocks):
         old_rect = self.rect.copy()
+        
+        # Update animation first
+        self.update_animation()
         
         # First check for hazards
         for hazard in hazards:
@@ -118,10 +144,6 @@ class Player(pygame.sprite.Sprite):
             self.rect.right = SCREEN_WIDTH - 190
         if self.rect.top < 100:
             self.rect.top = 100
-            self.velocity_y = 0
-        if self.rect.bottom > SCREEN_HEIGHT - 140:
-            self.rect.bottom = SCREEN_HEIGHT - 140
-            self.on_ground = True
             self.velocity_y = 0
 
         # Update jump ability
@@ -188,18 +210,44 @@ class Player(pygame.sprite.Sprite):
 
     def move_left(self):
         self.velocity_x = -PLAYER_SPEED
+        self.facing_right = False
+        self.is_moving = True
 
     def move_right(self):
         self.velocity_x = PLAYER_SPEED
+        self.facing_right = True
+        self.is_moving = True
 
     def stop(self):
         self.velocity_x = 0
+        self.is_moving = False
+        self.current_sprite = 0  # Reset to first frame when not moving
+        self.image = self.sprites[self.current_sprite]
+        if not self.facing_right:
+            self.image = pygame.transform.flip(self.image, True, False)
+
+    def update_animation(self):
+        if self.is_moving:
+            self.animation_timer += self.animation_speed
+            if self.animation_timer >= 1:
+                self.animation_timer = 0
+                self.current_sprite = (self.current_sprite + 1) % len(self.sprites)
+                self.image = self.sprites[self.current_sprite]
+                if not self.facing_right:
+                    self.image = pygame.transform.flip(self.image, True, False)
 
 class Platform(pygame.sprite.Sprite):
     def __init__(self, x, y, width, height):
         super().__init__()
-        self.image = pygame.Surface((width, height))
-        self.image.fill(GREEN)
+        try:
+            # Try to load the platform texture
+            self.image = pygame.image.load("sprites/platform_wild_west.png").convert_alpha()
+            self.image = pygame.transform.scale(self.image, (width, height))
+        except pygame.error:
+            # Fallback if texture not found
+            print("Warning: Could not load platform texture, using fallback")
+            self.image = pygame.Surface((width, height))
+            self.image.fill(GREEN)
         self.rect = self.image.get_rect()
         self.rect.x = x
         self.rect.y = y
@@ -212,6 +260,8 @@ class SmallPlatform(Platform):
 class Hazard(pygame.sprite.Sprite):
     def __init__(self, x, y, size=50):
         super().__init__()
+        # Increased hazard size by 50%
+        size = int(size * 1.5)
         self.image = pygame.Surface((size, size), pygame.SRCALPHA)
         self.rect = self.image.get_rect()
         self.rect.x = x
@@ -324,7 +374,7 @@ class BreakableBlock(pygame.sprite.Sprite):
     def break_block(self):
         if not self.breaking:
             self.breaking = True
-            self.break_timer = 90# Break after 10 frames
+            self.break_timer = 90  # Break after 90 frames
     
     def update(self):
         if self.breaking:
@@ -351,12 +401,7 @@ def load_level(filepath):
     # Create player
     player = Player()
     all_sprites.add(player)
-
-    # Add default ground platform
-    ground = Platform(0, SCREEN_HEIGHT - 140, SCREEN_WIDTH, 40)
-    all_sprites.add(ground)
-    platforms.add(ground)
-
+    
     # Load level data from file
     if os.path.exists(filepath):
         with open(filepath, 'r') as f:
@@ -477,6 +522,15 @@ def main(level_file=None):
     # Load level
     all_sprites, platforms, hazards, bounce_pads, checkpoints, moving_platforms, breakable_blocks, player = load_level(level_file)
 
+    # Load background image
+    try:
+        background = pygame.image.load("sprites/background_wild_west.png").convert()
+        background = pygame.transform.scale(background, (SCREEN_WIDTH, SCREEN_HEIGHT))
+        use_background_image = True
+    except pygame.error:
+        print("Warning: Could not load background image, using solid color")
+        use_background_image = False
+
     # Font setup for UI
     font = pygame.font.SysFont('Arial', 20)
 
@@ -505,8 +559,10 @@ def main(level_file=None):
         keys = pygame.key.get_pressed()
         if keys[pygame.K_LEFT]:
             player.move_left()
-        if keys[pygame.K_RIGHT]:
+        elif keys[pygame.K_RIGHT]:
             player.move_right()
+        else:
+            player.stop()
 
         # Update all sprites
         bounce_pads.update()
@@ -515,7 +571,11 @@ def main(level_file=None):
         player.update(platforms, hazards, bounce_pads, checkpoints, moving_platforms, breakable_blocks)
 
         # Draw everything
-        screen.fill(BLACK)
+        if use_background_image:
+            screen.blit(background, (0, 0))
+        else:
+            screen.fill(BLACK)
+            
         all_sprites.draw(screen)
 
         # Draw UI text
