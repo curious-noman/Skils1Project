@@ -12,7 +12,7 @@ SCREEN_HEIGHT = 1080
 FPS = 60
 GRAVITY = 1
 JUMP_STRENGTH = -18
-PLAYER_SPEED = 5
+PLAYER_SPEED = 7
 COYOTE_TIME = 6
 BOUNCE_STRENGTH = -25
 CHECKPOINT_COOLDOWN = 30  # Frames between checkpoint activations
@@ -43,8 +43,8 @@ class Player(pygame.sprite.Sprite):
         # Load wizard sprites
         self.sprites = []
         # Increased player size from 30x50 to 60x100
-        PLAYER_WIDTH = 70
-        PLAYER_HEIGHT = 100
+        PLAYER_WIDTH = 100
+        PLAYER_HEIGHT = 150
         
         for i in range(1, 9):  # wizard1.png to wizard8.png
             try:
@@ -261,7 +261,7 @@ class Hazard(pygame.sprite.Sprite):
     def __init__(self, x, y, size=50):
         super().__init__()
         # Increased hazard size by 50%
-        size = int(size * 1.5)
+        size = int(size)
         self.image = pygame.Surface((size, size), pygame.SRCALPHA)
         self.rect = self.image.get_rect()
         self.rect.x = x
