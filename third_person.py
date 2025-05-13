@@ -152,13 +152,12 @@ platforms = pygame.sprite.Group()
 hazards = pygame.sprite.Group()
 
 # Create platforms
-ground = Platform(0, SCREEN_HEIGHT - 140, SCREEN_WIDTH, 40)
 platform1 = Platform(400, 800, 200, 20)
 platform2 = Platform(800, 600, 200, 20)
 platform3 = Platform(400, 400, 200, 20)
 
-all_sprites.add(ground, platform1, platform2, platform3)
-platforms.add(ground, platform1, platform2, platform3)
+all_sprites.add(platform1, platform2, platform3)
+platforms.add(platform1, platform2, platform3)
 
 # Create player and set spawn position on platform1
 player = Player()
