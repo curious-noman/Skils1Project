@@ -5,7 +5,8 @@
         "wrong_choice1": "CO₂",
         "wrong_choice2": "NaCl",
         "wrong_choice3": "O₂",
-        "attackPower": 1
+        "attackPower": 1,
+        "explanation": "Water is composed of two hydrogen atoms and one oxygen atom, hence the chemical formula H₂O."
     },
     {
         "question": "Which of these is NOT a prime number?",
@@ -13,7 +14,8 @@
         "wrong_choice1": "7",
         "wrong_choice2": "13",
         "wrong_choice3": "17",
-        "attackPower": 1
+        "attackPower": 1,
+        "explanation": "A prime number is divisible only by 1 and itself. 9 can be divided by 3 (3×3=9), so it's not prime."
     },
     {
         "question": "The capital of Japan is:",
@@ -21,7 +23,8 @@
         "wrong_choice1": "Beijing",
         "wrong_choice2": "Seoul",
         "wrong_choice3": "Bangkok",
-        "attackPower": 1
+        "attackPower": 1,
+        "explanation": "Tokyo has been Japan's capital since 1868. Beijing is China's capital, Seoul is South Korea's, and Bangkok is Thailand's."
     },
     {
         "question": "What is 15% of 200?",
@@ -29,7 +32,8 @@
         "wrong_choice1": "15",
         "wrong_choice2": "45",
         "wrong_choice3": "60",
-        "attackPower": 1
+        "attackPower": 1,
+        "explanation": "To calculate 15% of 200: (15/100) × 200 = 0.15 × 200 = 30."
     },
     {
         "question": "Which planet is closest to the Sun?",
@@ -37,7 +41,8 @@
         "wrong_choice1": "Venus",
         "wrong_choice2": "Earth",
         "wrong_choice3": "Mars",
-        "attackPower": 1
+        "attackPower": 1,
+        "explanation": "Mercury is the smallest and innermost planet in the Solar System, with an orbital period of about 88 Earth days."
     },
     {
         "question": "What is the largest organ in the human body?",
@@ -45,7 +50,8 @@
         "wrong_choice1": "Liver",
         "wrong_choice2": "Brain",
         "wrong_choice3": "Heart",
-        "attackPower": 1
+        "attackPower": 1,
+        "explanation": "The skin is the body's largest organ, with a total area of about 20 square feet in adults."
     },
     {
         "question": "In which year did World War II end?",
@@ -53,7 +59,8 @@
         "wrong_choice1": "1939",
         "wrong_choice2": "1941",
         "wrong_choice3": "1950",
-        "attackPower": 2
+        "attackPower": 2,
+        "explanation": "World War II ended in 1945 with the surrender of Germany in May and Japan in September after atomic bombs were dropped on Hiroshima and Nagasaki."
     },
     {
         "question": "Which of these is a renewable energy source?",
@@ -61,7 +68,8 @@
         "wrong_choice1": "Coal",
         "wrong_choice2": "Natural gas",
         "wrong_choice3": "Nuclear",
-        "attackPower": 1
+        "attackPower": 1,
+        "explanation": "Solar power is renewable as it comes from the sun's energy. Coal, natural gas, and nuclear rely on finite resources."
     },
     {
         "question": "What is the square root of 144?",
@@ -69,7 +77,8 @@
         "wrong_choice1": "10",
         "wrong_choice2": "14",
         "wrong_choice3": "16",
-        "attackPower": 1
+        "attackPower": 1,
+        "explanation": "12 × 12 = 144. Square roots are numbers that when multiplied by themselves give the original number."
     },
     {
         "question": "Who painted the Mona Lisa?",
@@ -77,6 +86,7 @@
         "wrong_choice1": "Pablo Picasso",
         "wrong_choice2": "Vincent van Gogh",
         "wrong_choice3": "Michelangelo",
-        "attackPower": 1
+        "attackPower": 1,
+        "explanation": "Leonardo da Vinci painted the Mona Lisa between 1503-1519. It's now displayed in the Louvre Museum in Paris."
     }
 ]
