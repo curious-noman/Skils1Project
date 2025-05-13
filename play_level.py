@@ -14,7 +14,7 @@ SCREEN_WIDTH = 1920
 SCREEN_HEIGHT = 1080
 FPS = 60
 GRAVITY = 1
-JUMP_STRENGTH = -18
+JUMP_STRENGTH = -20
 PLAYER_SPEED = 7
 COYOTE_TIME = 6
 BOUNCE_STRENGTH = -25
@@ -46,8 +46,10 @@ class Player(pygame.sprite.Sprite):
         # Load wizard sprites
         self.sprites = []
         # Increased player size from 30x50 to 60x100
-        PLAYER_WIDTH = 200
-        PLAYER_HEIGHT = 300
+
+        PLAYER_WIDTH = 100
+        PLAYER_HEIGHT = 120
+
         
         for i in range(1, 9):  # wizard1.png to wizard8.png
             try:
