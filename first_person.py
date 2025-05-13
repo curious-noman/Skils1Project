@@ -101,12 +101,13 @@ def update_timer():
         time_remaining = max(0, Q_time - elapsed)
         if time_remaining <= 0:
             timer_active = False
-            # Handle time running out
+            # Handle time running out - treat as wrong answer
             if battle_state == "player_turn" and current_question:
                 global message
                 message = "Time's up! No attack this turn!"
                 battle_state = "enemy_turn"
                 create_buttons()
+                
 class Button:
     def __init__(self, x, y, width, height, text, action=None, color=(100, 100, 100), hover_color=(150, 150, 150)):
         self.rect = pygame.Rect(x, y, width, height)
@@ -121,7 +122,7 @@ class Button:
         pygame.draw.rect(screen, color, self.rect)
         pygame.draw.rect(screen, (255, 255, 255), self.rect, 2)
         
-        text_surface = font.render(self.text, True, (255, 255, 255))
+        text_surface = medium_font.render(self.text, True, (255, 255, 255))
         text_rect = text_surface.get_rect(center=self.rect.center)
         screen.blit(text_surface, text_rect)
         
@@ -136,13 +137,22 @@ class Button:
             return True
         return False
 
+def continue_battle():
+    global battle_state
+    if enemy["hp"] <= 0:
+        battle_state = "won"
+    else:
+        battle_state = "player_turn" if correct else "enemy_turn"
+    create_buttons()
 
-
+    
 def create_buttons():
     global buttons
     buttons = []
     
-    if battle_state == "player_turn":
+    if battle_state == "showing_explanation":
+        buttons.append(Button(SCREEN_WIDTH//2 - 150, 950, 300, 50, "Continue", continue_battle))
+    elif battle_state == "player_turn":
         if current_question:
     
             if choices:
@@ -270,8 +280,7 @@ def start_shake(intensity, duration):
     shake_duration = duration
         
 def check_answer():
-    """Check if player's answer is correct before attacking."""
-    global battle_state, message, player_answer, right_answer, current_question
+    global battle_state, message, player_answer, right_answer, current_question, showing_explanation
 
     correct = False
     if not player_answer or not current_question:
@@ -279,38 +288,24 @@ def check_answer():
 
     # Check multiple choice answers
     if player_answer.upper() in ("A", "B", "C", "D"):
-        index = ord(player_answer.upper()) - ord('A')  # A->0, B->1, etc.
+        index = ord(player_answer.upper()) - ord('A')
         if index < len(choices) and choices[index].lower() == right_answer.lower():
             correct = True
-    # Check direct answer
     elif player_answer.lower() == right_answer.lower():
         correct = True
         
     if correct:
-        
         damage = current_question["attackPower"]
         enemy["hp"] -= damage
-        message = f"✅ Correct! {player['name']} attacks for {damage} damage!"
-        start_shake(5,  1.2)  # intensity=5, duration=0.3 seconds
-
-    
-        if enemy["hp"] <= 0:
-            enemy["hp"] = 0
-            battle_state = "won"
-        else:
-            battle_state = "enemy_turn"
-            
-    
+        message = f"✅ Correct! {player['name']} attacks for {damage} damage!\n\nExplanation: {current_question.get('explanation', 'No explanation available.')}"
+        start_shake(5, 1.2)
     else:
-        message = "❌ Wrong answer! No attack this turn."
-        battle_state = "enemy_turn"
+        message = f"❌ Wrong answer! No attack this turn.\n\nExplanation: {current_question.get('explanation', 'No explanation available.')}"
     
-
-
-    player_answer = ""
-    current_question = None
+    # Set state to show explanation
+    battle_state = "showing_explanation"
     create_buttons()
-
+    
     
 def player_attack():
     global battle_state, message
@@ -341,6 +336,20 @@ def enemy_turn():
 
 # Initialize pygame
 pygame.init()
+
+
+#fooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooont
+
+
+try:
+    small_font = pygame.font.Font('fonts/Pokemon-Classic.ttf', 16)
+    medium_font = pygame.font.Font('fonts/Pokemon-Classic.ttf', 24)
+    large_font = pygame.font.Font('fonts/Pokemon-Classic.ttf', 32)
+except:
+    font = pygame.font.SysFont('arial', 24)
+    
+
+    
 SCREEN_WIDTH = 1920
 SCREEN_HEIGHT = 1080
 screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
@@ -357,7 +366,7 @@ message = "What will you do?"
 # Load images
 try:
     heart = pygame.image.load('images/heart.png')
-    heart_image = pygame.transform.scale(heart, (40, 40)) 
+    heart_image = pygame.transform.scale(heart, (60, 60)) 
 except:
     heart_image = pygame.Surface((40, 40))
     heart_image.fill((255, 0, 0))
@@ -378,17 +387,21 @@ wand_image = pygame.transform.scale(Wand, (530, 530))
 box= pygame.image.load('images/box.png')
 box_image = pygame.transform.scale(box, (750, 240)) 
 
+small_box= pygame.image.load('images/box.png')
+small_box_image = pygame.transform.scale(small_box, (170, 70))
+
 
 
 def draw_hearts(x, y, hp):
     for i in range(hp):  
-        screen.blit(heart_image, (x + i * 45, y)) 
+        screen.blit(heart_image, (x + i * 65, y)) 
         
         
 def draw_battle():
     screen.blit(BP_image, (0, 0)) 
         # Draw action box
     screen.blit(box_image, (30, 820))
+    screen.blit(small_box_image, (930, 30))
 
     wand_x, wand_y = wand_position
     if is_wand_shaking:
@@ -396,18 +409,18 @@ def draw_battle():
         wand_y += random.randint(-15, 15)
     screen.blit(wand_image, (wand_x, wand_y))
 
-    draw_text(f"{player['name']}:", (50, 50), (255, 255, 255))
-    draw_hearts(150, 40, player["hp"]) 
+    draw_text(f"{player['name']}:", (50, 50), (255, 255, 255), medium_font)
+    draw_hearts(250, 40, player["hp"]) 
 
-    draw_text(f"{enemy['name']}: ", (1510-len(enemy['name'])*6, 50), (255, 255, 255))
-    draw_hearts(1590, 40, enemy["hp"])
+    draw_text(f"{enemy['name']}: ", (1510-len(enemy['name'])*6, 50), (255, 255, 255), medium_font)
+    draw_hearts(1690, 40, enemy["hp"])
 
     # Draw message
-    draw_text(message, (50, 850), (100, 0, 255))
+    draw_text(message, (50, 850), (100, 0, 255), medium_font)
     
     if current_question and timer_active:
         timer_text = f"Time: {time_remaining}s"
-        draw_text(timer_text, (SCREEN_WIDTH/2, 50), (155, 55, 255))
+        draw_text(timer_text, (SCREEN_WIDTH/2, 50), (155, 55, 255), small_font)
         
     draw_x, draw_y = enemy_position
     if is_shaking:
@@ -426,10 +439,20 @@ def draw_battle():
     for button in buttons:
         button.draw(screen)
 
-def draw_text(text, pos, color=(255, 255, 255)):
-    text_surface = font.render(text, True, color)
-    screen.blit(text_surface, pos)
-
+def draw_text(text, pos, color=(255, 255, 255), font_obj=None):
+    """Draw text with optional custom font, supports multi-line text"""
+    if font_obj is None:
+        font_obj = medium_font
+        
+    # Split text into lines
+    lines = text.split('\n')
+    x, y = pos
+    
+    for line in lines:
+        if line:  # Only render non-empty lines
+            text_surface = font_obj.render(line, False, color)
+            screen.blit(text_surface, (x, y))
+        y += font_obj.get_height() + 5 
 # Initial button setup
 create_buttons()
 
@@ -484,7 +507,19 @@ def run_game():
                 for button in buttons:
                     if button.handle_event(event):
                         break
-            
+            if battle_state == "showing_explanation":
+                # Wait for player to press continue
+                for event in pygame.event.get():
+                    if event.type == pygame.KEYDOWN and event.key == pygame.K_RETURN:
+                        if enemy["hp"] <= 0:
+                            battle_state = "won"
+                        else:
+                            battle_state = "player_turn" if correct else "enemy_turn"
+                        create_buttons()
+                    elif event.type == pygame.MOUSEBUTTONDOWN:
+                        for button in buttons:
+                            if button.handle_event(event):
+                                break
             # Keyboard handling (keeps original functionality)
             if event.type == pygame.KEYDOWN:
                 if battle_state == "player_turn":

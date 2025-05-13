@@ -1,12 +1,12 @@
 
 import json
 import pygame
-import pygame_gui
+# import pygafme_gui
 
 pygame.init()
 SCREEN_WIDTH = 1920
 SCREEN_HEIGHT = 1080
-manager = pygame_gui.UIManager((SCREEN_WIDTH, SCREEN_HEIGHT))
+# manager = pygame_gui.UIManager((SCREEN_WIDTH, SCREEN_HEIGHT))
 screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 pygame.display.set_caption("Question Maker")
 font = pygame.font.SysFont("Arial", 24)
@@ -82,20 +82,21 @@ class InputBox:
         screen.blit(text_surface, (self.rect.x + 30, self.rect.y + 17))
 
 
-def main():
+def Qmaker():
     question_box = InputBox(700, 200, 700, 90)
     attack_box = InputBox(700, 300, 700, 90)
     answer_box = InputBox(700, 400, 700, 90)
     choice_box1 = InputBox(700, 500, 700, 90)
     choice_box2 = InputBox(700, 600, 700, 90)
     choice_box3 = InputBox(700, 700, 700, 90)
+    Explenation = InputBox(700, 800, 700, 90)
     
 
     save_image = pygame.image.load('images/save.png')
     
     save_image = pygame.transform.scale(save_image, (120, 50))
 
-    save_button = pygame.Rect(890, 800, 200, 50)
+    save_button = pygame.Rect(890, 900, 200, 50)
 
     labels = [
         {"text": "Question:", "position": (700, 170)},
@@ -103,12 +104,13 @@ def main():
         {"text": "Correct Answer:", "position": (700, 370)},
         {"text": "Wrong Choice 1:", "position": (700, 470)},
         {"text": "Wrong Choice 2:", "position": (700, 570)},
-        {"text": "Wrong Choice 3:", "position": (700, 670)}
+        {"text": "Wrong Choice 3:", "position": (700, 670)},
+        {"text": "Explenation:", "position": (700, 770)}
     ]
 
     running = True
     while running:
-        screen.fill((103, 99, 201))
+        screen.fill((57, 165, 249))
         
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -123,6 +125,7 @@ def main():
             choice_box1.handle_event(event)
             choice_box2.handle_event(event)
             choice_box3.handle_event(event)
+            Explenation.handle_event(event)
             
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if save_button.collidepoint(event.pos):
@@ -132,7 +135,9 @@ def main():
                         "attackPower": int(attack_box.text),
                         "wrong_choice1": choice_box1.text,
                         "wrong_choice2": choice_box2.text,
-                        "wrong_choice3": choice_box3.text
+                        "wrong_choice3": choice_box3.text,
+                        "explanation": Explenation.text
+                        
                     }
                     questions = load_questions()
                     questions.append(new_question)
@@ -151,9 +156,10 @@ def main():
         choice_box1.draw(screen)
         choice_box2.draw(screen)
         choice_box3.draw(screen)
+        Explenation.draw(screen)
 
         screen.blit(save_image, (save_button.x + 20, save_button.y + 15))
         
         pygame.display.flip()
 if __name__ == "__main__":
-    main()
+    Qmaker()
