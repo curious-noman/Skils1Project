@@ -2,6 +2,8 @@ import random
 import pygame
 import sys
 import json
+import time
+from BluetoothV2.game_controller import GameController
 
 def load_questions():
     """Load questions from JSON file."""
@@ -172,11 +174,15 @@ class Button:
         self.color = color
         self.hover_color = hover_color
         self.is_hovered = False
+        self.is_selected = False  # For controller navigation
         
     def draw(self, screen):
-        color = self.hover_color if self.is_hovered else self.color
+        # Use hover color if hovered by mouse or selected by controller
+        color = self.hover_color if (self.is_hovered or self.is_selected) else self.color
         pygame.draw.rect(screen, color, self.rect)
-        pygame.draw.rect(screen, (255, 255, 255), self.rect, 2)
+        # Draw a thicker border if selected by controller
+        border_width = 4 if self.is_selected else 2
+        pygame.draw.rect(screen, (255, 255, 255), self.rect, border_width)
         
         text_surface = medium_font.render(self.text, True, (255, 255, 255))
         text_rect = text_surface.get_rect(center=self.rect.center)
@@ -209,8 +215,9 @@ def continue_battle():
     create_buttons()
     
 def create_buttons():
-    global buttons
+    global buttons, selected_button_index
     buttons = []
+    selected_button_index = 0  # Reset selected button index when creating new buttons
     
     if battle_state == "showing_explanation":
         buttons.append(Button(SCREEN_WIDTH//2 - 550, 750, 300, 50, "Continue", continue_battle))
@@ -373,6 +380,7 @@ def check_answer():
     else:
         message = f"❌ Wrong answer! No attack this turn."
         battle_state = "enemy_turn"
+
 
     timer_active = False
     battle_state = "showing_explanation"
@@ -552,16 +560,27 @@ def draw_text(text, pos, color=(255, 255, 255), font_obj=None):
             text_surface = font_obj.render(line, False, color)
             screen.blit(text_surface, (x, y))
         y += font_obj.get_height() + 5 
+
 # Initial button setup
 create_buttons()
 
 # Main game loop
-def run_game():
-    # Initialize game state
-    global running, battle_state, message, player, enemy
+def run_game(create_new_controller=True):
+    global screen, clock, battle_state, message, current_question, choices, right_answer, running, bt_controller, selected_button_index
+    
+    # Initialize Bluetooth controller only if we need to create a new one
+    if create_new_controller:
+        bt_controller = GameController(debug=True)
+        bt_controller.start()
+        
+        # Wait a moment for Bluetooth to initialize
+        time.sleep(1)
+    
     running = True
     battle_state = "player_turn"
     message = "What will you do?"
+    current_question = None
+    selected_button_index = 0  # Track which button is selected by controller
     
     # Reset player and enemy stats
     player = {
@@ -583,6 +602,9 @@ def run_game():
     
     # Main game loop
     last_time = pygame.time.get_ticks()
+    controller_cooldown = 0  # Cooldown for controller input to prevent rapid navigation
+    controller_cooldown_time = 0.2  # Seconds between controller inputs
+    
     while running:
         screen.blit(BP_image, (0, 0)) 
         current_time = pygame.time.get_ticks()
@@ -593,15 +615,47 @@ def run_game():
         update_timer() 
         mouse_pos = pygame.mouse.get_pos()
         
+        # Update controller cooldown
+        if controller_cooldown > 0:
+            controller_cooldown -= dt
+        
+        # Handle Bluetooth controller input
+        if bt_controller.is_connected() and controller_cooldown <= 0:
+            controller_state = bt_controller.update()
+            
+            # Reset all button selections first
+            for button in buttons:
+                button.is_selected = False
+            
+            # Navigate between buttons with X-axis controller
+            if len(buttons) > 0:
+                # Handle horizontal navigation (left/right)
+                if controller_state['moving_left']:
+                    selected_button_index = (selected_button_index - 1) % len(buttons)
+                    controller_cooldown = controller_cooldown_time
+                elif controller_state['moving_right']:
+                    selected_button_index = (selected_button_index + 1) % len(buttons)
+                    controller_cooldown = controller_cooldown_time
+                
+                # Select the current button
+                if 0 <= selected_button_index < len(buttons):
+                    buttons[selected_button_index].is_selected = True
+                
+                # Activate button with Y controller jump or button press
+                if controller_state['jumping'] or controller_state['button_pressed']:
+                    if 0 <= selected_button_index < len(buttons) and buttons[selected_button_index].action:
+                        buttons[selected_button_index].action()
+                        controller_cooldown = controller_cooldown_time
+        
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
 
-            # Handle button hover
+            # Handle button hover with mouse (still keep mouse functionality)
             for button in buttons:
                 button.check_hover(mouse_pos)
                 
-            # Handle button clicks
+            # Handle button clicks with mouse
             if event.type == pygame.MOUSEBUTTONDOWN:
                 for button in buttons:
                     if button.handle_event(event):
@@ -650,6 +704,18 @@ def run_game():
         draw_battle()
         pygame.display.flip()
         clock.tick(60)
+
+    # Clean up Bluetooth controller before exiting, but only if we created it
+    if create_new_controller:
+        bt_controller.stop()
+
+# Function to run the game with an existing controller (called from platformer)
+def run_game_with_controller(existing_controller):
+    global bt_controller
+    # Use the existing controller instead of creating a new one
+    bt_controller = existing_controller
+    run_game(create_new_controller=False)
+    # Don't stop the controller when exiting, as it's still needed by the platformer
 
 if __name__ == "__main__":
     # Only run if executed directly (not when imported)
