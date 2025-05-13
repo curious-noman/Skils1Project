@@ -1,0 +1,82 @@
+[
+    {
+        "question": "What is the chemical symbol for water?",
+        "answer": "H₂O",
+        "wrong_choice1": "CO₂",
+        "wrong_choice2": "NaCl",
+        "wrong_choice3": "O₂",
+        "attackPower": 1
+    },
+    {
+        "question": "Which of these is NOT a prime number?",
+        "answer": "9",
+        "wrong_choice1": "7",
+        "wrong_choice2": "13",
+        "wrong_choice3": "17",
+        "attackPower": 1
+    },
+    {
+        "question": "The capital of Japan is:",
+        "answer": "Tokyo",
+        "wrong_choice1": "Beijing",
+        "wrong_choice2": "Seoul",
+        "wrong_choice3": "Bangkok",
+        "attackPower": 1
+    },
+    {
+        "question": "What is 15% of 200?",
+        "answer": "30",
+        "wrong_choice1": "15",
+        "wrong_choice2": "45",
+        "wrong_choice3": "60",
+        "attackPower": 1
+    },
+    {
+        "question": "Which planet is closest to the Sun?",
+        "answer": "Mercury",
+        "wrong_choice1": "Venus",
+        "wrong_choice2": "Earth",
+        "wrong_choice3": "Mars",
+        "attackPower": 1
+    },
+    {
+        "question": "What is the largest organ in the human body?",
+        "answer": "Skin",
+        "wrong_choice1": "Liver",
+        "wrong_choice2": "Brain",
+        "wrong_choice3": "Heart",
+        "attackPower": 1
+    },
+    {
+        "question": "In which year did World War II end?",
+        "answer": "1945",
+        "wrong_choice1": "1939",
+        "wrong_choice2": "1941",
+        "wrong_choice3": "1950",
+        "attackPower": 2
+    },
+    {
+        "question": "Which of these is a renewable energy source?",
+        "answer": "Solar power",
+        "wrong_choice1": "Coal",
+        "wrong_choice2": "Natural gas",
+        "wrong_choice3": "Nuclear",
+        "attackPower": 1
+    },
+    {
+        "question": "What is the square root of 144?",
+        "answer": "12",
+        "wrong_choice1": "10",
+        "wrong_choice2": "14",
+        "wrong_choice3": "16",
+        "attackPower": 1
+    },
+    {
+        "question": "Who painted the Mona Lisa?",
+        "answer": "Leonardo da Vinci",
+        "wrong_choice1": "Pablo Picasso",
+        "wrong_choice2": "Vincent van Gogh",
+        "wrong_choice3": "Michelangelo",
+        "attackPower": 1
+    }
+]
