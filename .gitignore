@@ -3,8 +3,15 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+# Bluetooth
+bluetooth
+picocode
+
 # C extensions
 *.so
+venv/
+./env/
+./venv/
 
 # Distribution / packaging
 .Python

@@ -1,5 +1,7 @@
 import pygame
 import sys
+import time
+from BluetoothV2.game_controller import GameController
 
 # Initialize pygame
 pygame.init()
@@ -170,6 +172,16 @@ hazard = Hazard(600, SCREEN_HEIGHT - 140 - 50)
 all_sprites.add(hazard)
 hazards.add(hazard)
 
+# Initialize Bluetooth controller
+bt_controller = GameController(debug=True)
+bt_controller.start()
+
+# Wait a moment for Bluetooth to initialize
+time.sleep(1)
+
+# Display connection status
+font = pygame.font.Font(None, 36)
+
 # Game loop
 running = True
 while running:
@@ -186,18 +198,53 @@ while running:
             if event.key == pygame.K_RIGHT and player.velocity_x > 0:
                 player.stop()
 
+    # Handle keyboard controls (as fallback)
     keys = pygame.key.get_pressed()
     if keys[pygame.K_LEFT]:
         player.move_left()
     if keys[pygame.K_RIGHT]:
         player.move_right()
+    if keys[pygame.K_SPACE]:
+        player.jump()
     if keys[pygame.K_l]:
         running = False
 
+    # Handle Bluetooth controller input
+    if bt_controller.is_connected():
+        controller_state = bt_controller.update()
+        
+        # Handle movement based on controller input
+        if controller_state['moving_left']:
+            player.move_left()
+        elif controller_state['moving_right']:
+            player.move_right()
+        else:
+            # Only stop if we were moving due to controller input
+            if player.velocity_x != 0 and not (keys[pygame.K_LEFT] or keys[pygame.K_RIGHT]):
+                player.stop()
+        
+        # Handle jumping with Y controller
+        if controller_state['jumping']:
+            player.jump()
+    
+    # Update game state
     player.update(platforms, hazards)
+    
+    # Draw everything
     screen.fill(BLACK)
     all_sprites.draw(screen)
+    
+    # Display connection status
+    if bt_controller.is_connected():
+        status_text = font.render("Bluetooth Connected", True, GREEN)
+    else:
+        status_text = font.render("Bluetooth Disconnected", True, RED)
+    screen.blit(status_text, (10, 10))
+    
     pygame.display.flip()
+
+# Clean up Bluetooth controller before exiting
+bt_controller.stop()
 
 pygame.quit()
 sys.exit()

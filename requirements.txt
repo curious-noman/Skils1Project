@@ -1,0 +1,19 @@
+# Python dependencies for Skils1Project
+
+# Core dependencies
+pygame==2.5.2  # Game engine
+
+# Bluetooth dependencies
+bleak==0.21.1  # Bluetooth Low Energy library for Python
+
+# Standard library modules used (no installation needed):
+# - asyncio
+# - json
+# - os
+# - platform
+# - queue
+# - random
+# - struct
+# - sys
+# - threading
+# - time

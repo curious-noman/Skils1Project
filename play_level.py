@@ -2,7 +2,9 @@ import pygame
 import sys
 import json
 import os
+import time
 from first_person import run_game
+from BluetoothV2.game_controller import GameController
 
 # Initialize pygame
 pygame.init()
@@ -298,6 +300,9 @@ class BouncePad(pygame.sprite.Sprite):
             if self.active_timer == 0:
                 self.image = self.base_image
 
+# Global Bluetooth controller that can be accessed by all classes
+bt_controller = None
+
 class Checkpoint(pygame.sprite.Sprite):
     def __init__(self, x, y, width, height):
         super().__init__()
@@ -323,8 +328,10 @@ class Checkpoint(pygame.sprite.Sprite):
             self.is_active = True
             self.has_triggered = True
             self.image = self.active_image
-            # Call the first-person game function
-            run_game()
+            # Call the first-person game function with the existing Bluetooth controller
+            from first_person import run_game_with_controller
+            # Pass the existing Bluetooth controller to the first-person game
+            run_game_with_controller(bt_controller)
 
 class MovingPlatform(pygame.sprite.Sprite):
     def __init__(self, x, y, width, height, move_distance=120, move_speed=2):
@@ -539,6 +546,14 @@ def main(level_file=None):
     # Font setup for UI
     font = pygame.font.SysFont('Arial', 20)
 
+    # Initialize Bluetooth controller
+    global bt_controller
+    bt_controller = GameController(debug=True)
+    bt_controller.start()
+    
+    # Wait a moment for Bluetooth to initialize
+    time.sleep(1)
+
     # Game loop
     running = True
     while running:
@@ -561,12 +576,35 @@ def main(level_file=None):
                 if event.key == pygame.K_RIGHT and player.velocity_x > 0:
                     player.stop()
 
+        # Handle keyboard controls (as fallback)
         keys = pygame.key.get_pressed()
+        keyboard_input = False
+        
         if keys[pygame.K_LEFT]:
             player.move_left()
+            keyboard_input = True
         elif keys[pygame.K_RIGHT]:
             player.move_right()
-        else:
+            keyboard_input = True
+        
+        # Handle Bluetooth controller input
+        if bt_controller.is_connected():
+            controller_state = bt_controller.update()
+            
+            # Handle movement based on controller input
+            if controller_state['moving_left']:
+                player.move_left()
+            elif controller_state['moving_right']:
+                player.move_right()
+            elif not keyboard_input:
+                # Only stop if we were moving due to controller input and no keyboard input
+                player.stop()
+            
+            # Handle jumping with Y controller
+            if controller_state['jumping']:
+                player.jump()
+        elif not keyboard_input:
+            # If no Bluetooth and no keyboard input, stop the player
             player.stop()
 
         # Update all sprites
@@ -585,8 +623,18 @@ def main(level_file=None):
 
         # Draw UI text
 
+        # Display Bluetooth connection status
+        if bt_controller.is_connected():
+            status_text = font.render("Bluetooth Connected", True, GREEN)
+        else:
+            status_text = font.render("Bluetooth Disconnected", True, RED)
+        screen.blit(status_text, (10, 10))
+
         pygame.display.flip()
 
+    # Clean up Bluetooth controller before exiting
+    bt_controller.stop()
+    
     pygame.quit()
 
 if __name__ == "__main__":
