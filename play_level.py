@@ -2,6 +2,9 @@ import pygame
 import sys
 import json
 import os
+import time
+from first_person import run_game
+from BluetoothV2.game_controller import GameController
 
 # Initialize pygame
 pygame.init()
@@ -43,8 +46,10 @@ class Player(pygame.sprite.Sprite):
         # Load wizard sprites
         self.sprites = []
         # Increased player size from 30x50 to 60x100
+
         PLAYER_WIDTH = 100
         PLAYER_HEIGHT = 120
+
         
         for i in range(1, 9):  # wizard1.png to wizard8.png
             try:
@@ -236,6 +241,18 @@ class Player(pygame.sprite.Sprite):
                 if not self.facing_right:
                     self.image = pygame.transform.flip(self.image, True, False)
 
+
+class Hazard(pygame.sprite.Sprite):
+    def __init__(self, x, y, size=50):
+        super().__init__()
+        # Increased hazard size by 50%
+        size = int(size)
+        self.image = pygame.image.load("sprites/spikes.png").convert_alpha()
+        self.image = pygame.transform.scale(self.image, (size * 2, size * 1.5))
+        self.rect = self.image.get_rect()
+        self.rect.x = x
+        self.rect.y = y
+
 class Platform(pygame.sprite.Sprite):
     def __init__(self, x, y, width, height):
         super().__init__()
@@ -256,17 +273,6 @@ class SmallPlatform(Platform):
     def __init__(self, x, y, width, height):
         super().__init__(x, y, width, height)
         self.image.fill(DARK_GREEN)
-
-class Hazard(pygame.sprite.Sprite):
-    def __init__(self, x, y, size=50):
-        super().__init__()
-        # Increased hazard size by 50%
-        size = int(size)
-        self.image = pygame.Surface((size, size), pygame.SRCALPHA)
-        self.rect = self.image.get_rect()
-        self.rect.x = x
-        self.rect.y = y
-        pygame.draw.polygon(self.image, GRAY, [(size//2, 0), (0, size), (size, size)])
 
 class BouncePad(pygame.sprite.Sprite):
     def __init__(self, x, y, width, height):
@@ -297,29 +303,53 @@ class BouncePad(pygame.sprite.Sprite):
             if self.active_timer == 0:
                 self.image = self.base_image
 
+# Global Bluetooth controller that can be accessed by all classes
+bt_controller = None
+
 class Checkpoint(pygame.sprite.Sprite):
     def __init__(self, x, y, width, height):
         super().__init__()
-        self.inactive_image = pygame.Surface((width, height), pygame.SRCALPHA)
-        self.active_image = pygame.Surface((width, height), pygame.SRCALPHA)
         
-        # Draw checkpoint flag
-        pygame.draw.rect(self.inactive_image, YELLOW, pygame.Rect(width//2-5, 0, 10, height))
-        pygame.draw.rect(self.inactive_image, YELLOW, pygame.Rect(0, 0, width, 10))
-        
-        pygame.draw.rect(self.active_image, LIGHT_YELLOW, pygame.Rect(width//2-5, 0, 10, height))
-        pygame.draw.rect(self.active_image, LIGHT_YELLOW, pygame.Rect(0, 0, width, 10))
-        
+        # Load the images
+        try:
+            self.inactive_image = pygame.image.load("images/dino4.png").convert_alpha()
+            self.active_image = pygame.image.load("images/dino4.png").convert_alpha()
+            
+            # Scale images to the desired size if needed
+            self.inactive_image = pygame.transform.scale(self.inactive_image, (width *4 , height*4))
+            self.active_image = pygame.transform.scale(self.active_image, (width*4, height*4))
+            
+            # You could modify the active image to look different if desired
+            # For example, make it brighter when active
+            self.active_image.fill((50, 50, 0, 0), special_flags=pygame.BLEND_ADD)
+            
+        except:
+            # Fallback to the original flag drawing if image loading fails
+            self.inactive_image = pygame.Surface((width, height), pygame.SRCALPHA)
+            self.active_image = pygame.Surface((width, height), pygame.SRCALPHA)
+            
+            pygame.draw.rect(self.inactive_image, YELLOW, pygame.Rect(width//2-5, 0, 10, height))
+            pygame.draw.rect(self.inactive_image, YELLOW, pygame.Rect(0, 0, width, 10))
+            
+            pygame.draw.rect(self.active_image, LIGHT_YELLOW, pygame.Rect(width//2-5, 0, 10, height))
+            pygame.draw.rect(self.active_image, LIGHT_YELLOW, pygame.Rect(0, 0, width, 10))
+
         self.image = self.inactive_image
         self.rect = self.image.get_rect()
         self.rect.x = x
         self.rect.y = y
         self.is_active = False
+        self.has_triggered = False
     
     def activate(self):
-        if not self.is_active:
+        if not self.is_active and not self.has_triggered:
             self.is_active = True
+            self.has_triggered = True
             self.image = self.active_image
+            # Call the first-person game function with the existing Bluetooth controller
+            from first_person import run_game_with_controller
+            # Pass the existing Bluetooth controller to the first-person game
+            run_game_with_controller(bt_controller)
 
 class MovingPlatform(pygame.sprite.Sprite):
     def __init__(self, x, y, width, height, move_distance=120, move_speed=2):
@@ -407,6 +437,15 @@ def load_level(filepath):
         with open(filepath, 'r') as f:
             level_data = json.load(f)
 
+        for hazard_data in level_data.get("hazards", []):
+            hazard = Hazard(
+                hazard_data["x"],
+                hazard_data["y"],
+                hazard_data.get("size", 50)
+            )
+            all_sprites.add(hazard)
+            hazards.add(hazard)
+
         # Add platforms
         for platform_data in level_data.get("platforms", []):
             platform = Platform(
@@ -419,15 +458,7 @@ def load_level(filepath):
             platforms.add(platform)
 
         # Add hazards
-        for hazard_data in level_data.get("hazards", []):
-            hazard = Hazard(
-                hazard_data["x"],
-                hazard_data["y"],
-                hazard_data.get("size", 50)
-            )
-            all_sprites.add(hazard)
-            hazards.add(hazard)
-
+        
         # Add Small Platforms
         for small_platform_data in level_data.get("small_platforms", []):
             small_platform = SmallPlatform(
@@ -522,17 +553,38 @@ def main(level_file=None):
     # Load level
     all_sprites, platforms, hazards, bounce_pads, checkpoints, moving_platforms, breakable_blocks, player = load_level(level_file)
 
-    # Load background image
+    # Load background image - MODIFIED FOR SCROLLING
     try:
-        background = pygame.image.load("sprites/background_wild_west.png").convert()
-        background = pygame.transform.scale(background, (SCREEN_WIDTH, SCREEN_HEIGHT))
+        original_bg = pygame.image.load("sprites/background_wild_west.png").convert()
+        
+        # Calculate scaled dimensions while maintaining aspect ratio
+        bg_ratio = original_bg.get_width() / original_bg.get_height()
+        scaled_height = SCREEN_HEIGHT
+        scaled_width = int(scaled_height * bg_ratio)
+        
+        # Scale the background
+        background = pygame.transform.scale(original_bg, (scaled_width, scaled_height))
+        
+        # Scrolling variables
+        bg_x = 0
+        max_scroll = scaled_width - SCREEN_WIDTH
+        scroll_speed = 2
         use_background_image = True
+        
     except pygame.error:
         print("Warning: Could not load background image, using solid color")
         use_background_image = False
 
     # Font setup for UI
     font = pygame.font.SysFont('Arial', 20)
+
+    # Initialize Bluetooth controller
+    global bt_controller
+    bt_controller = GameController(debug=True)
+    bt_controller.start()
+    
+    # Wait a moment for Bluetooth to initialize
+    time.sleep(1)
 
     # Game loop
     running = True
@@ -556,12 +608,35 @@ def main(level_file=None):
                 if event.key == pygame.K_RIGHT and player.velocity_x > 0:
                     player.stop()
 
+        # Handle keyboard controls (as fallback)
         keys = pygame.key.get_pressed()
+        keyboard_input = False
+        
         if keys[pygame.K_LEFT]:
             player.move_left()
+            keyboard_input = True
         elif keys[pygame.K_RIGHT]:
             player.move_right()
-        else:
+            keyboard_input = True
+        
+        # Handle Bluetooth controller input
+        if bt_controller.is_connected():
+            controller_state = bt_controller.update()
+            
+            # Handle movement based on controller input
+            if controller_state['moving_left']:
+                player.move_left()
+            elif controller_state['moving_right']:
+                player.move_right()
+            elif not keyboard_input:
+                # Only stop if we were moving due to controller input and no keyboard input
+                player.stop()
+            
+            # Handle jumping with Y controller
+            if controller_state['jumping']:
+                player.jump()
+        elif not keyboard_input:
+            # If no Bluetooth and no keyboard input, stop the player
             player.stop()
 
         # Update all sprites
@@ -570,20 +645,36 @@ def main(level_file=None):
         breakable_blocks.update()
         player.update(platforms, hazards, bounce_pads, checkpoints, moving_platforms, breakable_blocks)
 
+        # UPDATE BACKGROUND POSITION BASED ON PLAYER MOVEMENT
+        if use_background_image:
+            # Only scroll when player is moving right and we haven't reached the end
+            if player.velocity_x > 0 and bg_x > -max_scroll:
+                bg_x -= scroll_speed
+            # Clamp the position so we don't show empty space at the end
+            bg_x = max(-max_scroll, bg_x)
+
         # Draw everything
         if use_background_image:
-            screen.blit(background, (0, 0))
+            # Draw the background at the current scroll position
+            screen.blit(background, (bg_x, 0))
         else:
             screen.fill(BLACK)
             
         all_sprites.draw(screen)
 
         # Draw UI text
-        controls_text = font.render("Controls: Arrow Keys to Move, SPACE to Jump, R to Reset, ESC to Exit", True, WHITE)
-        screen.blit(controls_text, (10, 10))
+        # Display Bluetooth connection status
+        if bt_controller.is_connected():
+            status_text = font.render("Bluetooth Connected", True, GREEN)
+        else:
+            status_text = font.render("Bluetooth Disconnected", True, RED)
+        screen.blit(status_text, (10, 10))
 
         pygame.display.flip()
 
+    # Clean up Bluetooth controller before exiting
+    bt_controller.stop()
+    
     pygame.quit()
 
 if __name__ == "__main__":

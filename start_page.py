@@ -3,6 +3,9 @@ from button import Button
 from first_person import run_game
 pygame.init()
 from question_maker import Qmaker
+from play_level import main
+
+level_file = "levels/level1.json"
 
 SCREEN_WIDTH = 1920
 SCREEN_HEIGHT = 1080
@@ -58,8 +61,10 @@ def show_instructions():
         pygame.display.update()
 
 def play():
-    show_instructions()  # Show instructions first
-    result = run_game()  # Run the game
+    show_instructions()# this will be your actual game loop
+    result = main(level_file)
+    if result == "quit":
+        main_menu()
     
     # After game ends (won/lost/quit), return to main menu
     if result == "game_over":
