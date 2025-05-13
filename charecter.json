@@ -1,14 +1,5 @@
 [
-      {
-        "name": "Ratata",
-        "hp": 3,
-        "attack": 1,
-        "defense": 0,
-        "speed": 6,
-        "image": "images/try_oponent.png",
-        "width": 400,
-        "height":  390
-      },
+
       {
         "name": "Dino",
         "hp": 5,
