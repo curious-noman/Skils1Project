@@ -105,12 +105,12 @@ def Qmaker():
         {"text": "Wrong Choice 1:", "position": (700, 470)},
         {"text": "Wrong Choice 2:", "position": (700, 570)},
         {"text": "Wrong Choice 3:", "position": (700, 670)},
-        {"text": "Explenation:", "position": (700, 770)}
+        {"text": "Explanation:", "position": (700, 770)}
     ]
 
     running = True
     while running:
-        screen.fill((57, 165, 249))
+        screen.fill((199, 142, 254))
         
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
