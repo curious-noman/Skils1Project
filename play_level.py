@@ -579,8 +579,6 @@ def main(level_file=None):
         all_sprites.draw(screen)
 
         # Draw UI text
-        controls_text = font.render("Controls: Arrow Keys to Move, SPACE to Jump, R to Reset, ESC to Exit", True, WHITE)
-        screen.blit(controls_text, (10, 10))
 
         pygame.display.flip()
 

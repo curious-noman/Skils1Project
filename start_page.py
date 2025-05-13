@@ -2,7 +2,11 @@ import pygame, sys
 from button import Button
 from first_person import run_game
 pygame.init()
-from question_maker import Qmaker
+from play_level import main
+
+level_file = "levels/level1.json"
+
+
 
 SCREEN_WIDTH = 1920
 SCREEN_HEIGHT = 1080
@@ -59,7 +63,7 @@ def show_instructions():
 
 def play():
     show_instructions()# this will be your actual game loop
-    result = run_game()
+    result = main(level_file)
     if result == "quit":
         main_menu()
     
@@ -103,14 +107,12 @@ def main_menu():
                             text_input="PLAY", font=get_font(75), base_color="#d7fcd4", hovering_color="White")
         OPTIONS_BUTTON = Button(image=pygame.image.load("assets/Options Rect.png"), pos=(half_width, 600), 
                             text_input="OPTIONS", font=get_font(75), base_color="#d7fcd4", hovering_color="White")
-        QMAKER_BUTTON = Button(image=pygame.image.load("assets/Options Rect.png"), pos=(half_width, 750), 
-                            text_input="Q.MAKER", font=get_font(75), base_color="#d7fcd4", hovering_color="White")
-        QUIT_BUTTON = Button(image=pygame.image.load("assets/Quit Rect.png"), pos=(half_width, 900),
+        QUIT_BUTTON = Button(image=pygame.image.load("assets/Quit Rect.png"), pos=(half_width, 750), 
                             text_input="QUIT", font=get_font(75), base_color="#d7fcd4", hovering_color="White")
 
         SCREEN.blit(MENU_TEXT, MENU_RECT)
 
-        for button in [PLAY_BUTTON, OPTIONS_BUTTON, QMAKER_BUTTON,QUIT_BUTTON]:
+        for button in [PLAY_BUTTON, OPTIONS_BUTTON, QUIT_BUTTON]:
             button.changeColor(MENU_MOUSE_POS)
             button.update(SCREEN)
         
@@ -123,8 +125,6 @@ def main_menu():
                     play()
                 if OPTIONS_BUTTON.checkForInput(MENU_MOUSE_POS):
                     options()
-                if QMAKER_BUTTON.checkForInput(MENU_MOUSE_POS):
-                    Qmaker()
                 if QUIT_BUTTON.checkForInput(MENU_MOUSE_POS):
                     pygame.quit()
                     sys.exit()
