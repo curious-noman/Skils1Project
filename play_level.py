@@ -2,6 +2,7 @@ import pygame
 import sys
 import json
 import os
+from first_person import run_game
 
 # Initialize pygame
 pygame.init()
@@ -315,11 +316,15 @@ class Checkpoint(pygame.sprite.Sprite):
         self.rect.x = x
         self.rect.y = y
         self.is_active = False
+        self.has_triggered = False  # To prevent multiple triggers
     
     def activate(self):
-        if not self.is_active:
+        if not self.is_active and not self.has_triggered:
             self.is_active = True
+            self.has_triggered = True
             self.image = self.active_image
+            # Call the first-person game function
+            run_game()
 
 class MovingPlatform(pygame.sprite.Sprite):
     def __init__(self, x, y, width, height, move_distance=120, move_speed=2):
