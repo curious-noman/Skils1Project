@@ -2,6 +2,8 @@ import random
 import pygame
 import sys
 import json
+import time
+from BluetoothV2.game_controller import GameController
 
 def load_questions():
     """Load questions from JSON file."""
@@ -49,7 +51,71 @@ wand_shake_duration = 0
 wand_shake_intensity = 0
 wand_position = (1300, 650)
 
+EXPLANATION_BOX_COLOR = (40, 40, 80)  # Dark blue background
+EXPLANATION_BORDER_COLOR = (100, 100, 200)
+EXPLANATION_TEXT_COLOR = (255, 255, 255)
 
+
+def draw_explanation_box():
+    """Draw a box showing the explanation with Continue button below"""
+    # Box dimensions and position
+    box_rect = pygame.Rect(SCREEN_WIDTH//2 - 900, 200, 1000, 600)
+    
+    # Draw box with border
+    pygame.draw.rect(screen, EXPLANATION_BOX_COLOR, box_rect, border_radius=15)
+    pygame.draw.rect(screen, EXPLANATION_BORDER_COLOR, box_rect, 5, border_radius=15)
+    
+    # Add title based on correctness
+    title = "Explanation"
+    title_color = (255, 255, 255) 
+    title_surf = large_font.render(title, True, title_color)
+    title_rect = title_surf.get_rect(center=(box_rect.centerx, box_rect.top + 50))
+    screen.blit(title_surf, title_rect)
+    
+    # Draw explanation text
+    explanation = current_question.get('explanation', 'No explanation available.')
+    draw_wrapped_text(explanation, (box_rect.left + 50, box_rect.top + 100, box_rect.width - 100, box_rect.height - 200))
+
+def draw_wrapped_text(text, rect_params):
+    """Draw text with word wrapping within specified rectangle"""
+    x, y, width, height = rect_params
+    rect = pygame.Rect(x, y, width, height)
+    
+    words = text.split(' ')
+    space_width = medium_font.size(' ')[0]
+    line_height = medium_font.get_linesize()
+    
+    current_line = []
+    current_line_width = 0
+    current_y = y
+    
+    for word in words:
+        word_surface = medium_font.render(word, True, EXPLANATION_TEXT_COLOR)
+        word_width = word_surface.get_width()
+        
+        if current_line_width + word_width <= width:
+            current_line.append(word)
+            current_line_width += word_width + space_width
+        else:
+            # Draw current line
+            line_text = ' '.join(current_line)
+            line_surface = medium_font.render(line_text, True, EXPLANATION_TEXT_COLOR)
+            screen.blit(line_surface, (x, current_y))
+            
+            # Start new line
+            current_line = [word]
+            current_line_width = word_width + space_width
+            current_y += line_height
+            
+            # Stop if we run out of space
+            if current_y + line_height > y + height:
+                break
+    
+    # Draw the last line
+    if current_line and current_y + line_height <= y + height:
+        line_text = ' '.join(current_line)
+        line_surface = medium_font.render(line_text, True, EXPLANATION_TEXT_COLOR)
+        screen.blit(line_surface, (x, current_y))
 
 abilities={
         "Heal": {"uses": 1, "effect": "heal", "amount": 2},
@@ -66,27 +132,20 @@ player = {
 }
 enemy = {"name": charecter_list["name"], "hp":charecter_list["hp"],
          "attack": charecter_list["attack"], "defense": charecter_list["defense"], "speed": charecter_list["speed"]}
-print("enemy", enemy)
+
 def update_animations(dt):
     global is_shaking, shake_intensity, shake_duration
-    global is_wand_shaking, wand_shake_duration, battle_state
+    global is_wand_shaking, wand_shake_duration
     
     if is_wand_shaking:
         wand_shake_duration -= dt
         if wand_shake_duration <= 0:
             is_wand_shaking = False
             
-            is_shaking = True
-            shake_duration = 1.1  
-    
     if is_shaking:
         shake_duration -= dt
         if shake_duration <= 0:
             is_shaking = False
-            
-            battle_state = "enemy_turn"
-            create_buttons()
-
 
 def start_timer():
     global timer_active, timer_start, time_remaining
@@ -116,11 +175,15 @@ class Button:
         self.color = color
         self.hover_color = hover_color
         self.is_hovered = False
+        self.is_selected = False  # For controller navigation
         
     def draw(self, screen):
-        color = self.hover_color if self.is_hovered else self.color
+        # Use hover color if hovered by mouse or selected by controller
+        color = self.hover_color if (self.is_hovered or self.is_selected) else self.color
         pygame.draw.rect(screen, color, self.rect)
-        pygame.draw.rect(screen, (255, 255, 255), self.rect, 2)
+        # Draw a thicker border if selected by controller
+        border_width = 4 if self.is_selected else 2
+        pygame.draw.rect(screen, (255, 255, 255), self.rect, border_width)
         
         text_surface = medium_font.render(self.text, True, (255, 255, 255))
         text_rect = text_surface.get_rect(center=self.rect.center)
@@ -138,28 +201,35 @@ class Button:
         return False
 
 def continue_battle():
-    global battle_state
+    global battle_state, current_question, player_answer
+    current_question = None
+    player_answer = ""
+    
     if enemy["hp"] <= 0:
         battle_state = "won"
-    else:
-        battle_state = "player_turn" if correct else "enemy_turn"
+    elif battle_state == "showing_explanation":
+        # Only proceed to enemy turn if player answered wrong
+        if battle_state == "showing_explanation" and "❌" in message:
+            battle_state = "enemy_turn"
+        else:
+            battle_state = "player_turn"
     create_buttons()
-
     
 def create_buttons():
-    global buttons
+    global buttons, selected_button_index
     buttons = []
+    selected_button_index = 0  # Reset selected button index when creating new buttons
     
     if battle_state == "showing_explanation":
-        buttons.append(Button(SCREEN_WIDTH//2 - 150, 950, 300, 50, "Continue", continue_battle))
+        buttons.append(Button(SCREEN_WIDTH//2 - 550, 750, 300, 50, "Continue", continue_battle))
     elif battle_state == "player_turn":
         if current_question:
     
             if choices:
                 buttons.append(Button(80, 920, 300, 50, f"A: {choices[0]}", lambda: select_answer(0)))
-                buttons.append(Button(430, 920, 300, 50, f"B: {choices[1]}", lambda: select_answer(1)))
-                buttons.append(Button(80, 980, 300, 50, f"C: {choices[2]}", lambda: select_answer(2)))
-                buttons.append(Button(430, 980, 300, 50, f"D: {choices[3]}", lambda: select_answer(3)))
+                buttons.append(Button(580, 920, 300, 50, f"B: {choices[1]}", lambda: select_answer(1)))
+                buttons.append(Button(80, 990, 300, 50, f"C: {choices[2]}", lambda: select_answer(2)))
+                buttons.append(Button(580, 990, 300, 50, f"D: {choices[3]}", lambda: select_answer(3)))
                 
         elif  show_abilities_condetion:
             if abilities:
@@ -235,8 +305,9 @@ def select_answer(index):
 
 def player_attack_init():
     global current_question, message
-    ask_question()
-    create_buttons()  # Recreate buttons for answer selection
+    if battle_state == "player_turn":  # Only ask question if it's player's turn
+        ask_question()
+        create_buttons()
 
 def player_defend():
     global battle_state, message
@@ -250,7 +321,9 @@ def end_battle():
     running = False
 
 def ask_question():
-    global current_question, message, choices, right_answer 
+    global current_question, message, choices, right_answer, player_answer
+    player_answer = ""  # Clear previous answer
+    
     if questions_list:
         current_question = random.choice(questions_list)
         message = current_question["question"]
@@ -280,7 +353,7 @@ def start_shake(intensity, duration):
     shake_duration = duration
         
 def check_answer():
-    global battle_state, message, player_answer, right_answer, current_question, showing_explanation
+    global battle_state, message, player_answer, right_answer, current_question, timer_active
 
     correct = False
     if not player_answer or not current_question:
@@ -297,15 +370,20 @@ def check_answer():
     if correct:
         damage = current_question["attackPower"]
         enemy["hp"] -= damage
-        message = f"✅ Correct! {player['name']} attacks for {damage} damage!\n\nExplanation: {current_question.get('explanation', 'No explanation available.')}"
+        message = f"✅ Correct! {player['name']} attacks for {damage} damage!"
         start_shake(5, 1.2)
+        # Player keeps their turn if correct
+        battle_state = "player_turn"
     else:
-        message = f"❌ Wrong answer! No attack this turn.\n\nExplanation: {current_question.get('explanation', 'No explanation available.')}"
-    
-    # Set state to show explanation
+        message = f"❌ Wrong answer! No attack this turn."
+
+        battle_state = "enemy_turn"
+ 
+
+    timer_active = False
+
     battle_state = "showing_explanation"
     create_buttons()
-    
     
 def player_attack():
     global battle_state, message
@@ -353,7 +431,7 @@ except:
 SCREEN_WIDTH = 1920
 SCREEN_HEIGHT = 1080
 screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
-pygame.display.set_caption("Pokémon-like Battle")
+pygame.display.set_caption("Hunt for knowledge")
 clock = pygame.time.Clock()
 font = pygame.font.Font(None, 36)
 
@@ -385,11 +463,16 @@ BP_image = pygame.transform.scale(BP, (SCREEN_WIDTH, SCREEN_HEIGHT))
 Wand= pygame.image.load('images/maic_wand.png')
 wand_image = pygame.transform.scale(Wand, (530, 530)) 
 box= pygame.image.load('images/box.png')
-box_image = pygame.transform.scale(box, (750, 240)) 
+box_image = pygame.transform.scale(box, (950, 240)) 
 
 small_box= pygame.image.load('images/box.png')
-small_box_image = pygame.transform.scale(small_box, (170, 70))
+small_box_image = pygame.transform.scale(small_box, (200, 70))
 
+multi_choice_box = pygame.image.load('images/choice_box.png')  
+multi_choice_box_image = pygame.transform.scale(multi_choice_box, (1050, 180))
+
+EX_box= pygame.image.load('images/box.png')
+EX_box_image = pygame.transform.scale(EX_box, (950, 640))
 
 
 def draw_hearts(x, y, hp):
@@ -399,24 +482,37 @@ def draw_hearts(x, y, hp):
         
 def draw_battle():
     screen.blit(BP_image, (0, 0)) 
-        # Draw action box
-    screen.blit(box_image, (30, 820))
+    
+    # Draw the appropriate box based on state
+    if battle_state == "showing_explanation":
+        draw_explanation_box()
+    elif current_question:  # If in multiple-choice mode
+        screen.blit(multi_choice_box_image, (20, 890))
+    else:
+        screen.blit(box_image, (30, 820)) 
+    
+    # Draw the appropriate box based on state
+    if current_question:  # If in multiple-choice mode
+        screen.blit(multi_choice_box_image, (20, 890))
+    else:
+        screen.blit(box_image, (30, 820))
+        
     screen.blit(small_box_image, (930, 30))
-
+    # screen.blit(EX_box_image, (100, 220))
     wand_x, wand_y = wand_position
     if is_wand_shaking:
         wand_x += random.randint(-15, 15)
         wand_y += random.randint(-15, 15)
     screen.blit(wand_image, (wand_x, wand_y))
 
-    draw_text(f"{player['name']}:", (50, 50), (255, 255, 255), medium_font)
+    draw_text(f"{player['name']}:", (40, 50), (255, 255, 255), medium_font)
     draw_hearts(250, 40, player["hp"]) 
 
-    draw_text(f"{enemy['name']}: ", (1510-len(enemy['name'])*6, 50), (255, 255, 255), medium_font)
-    draw_hearts(1690, 40, enemy["hp"])
+    draw_text(f"{enemy['name']}: ", (1500-len(enemy['name'])*20, 50), (255, 255, 255), medium_font)
+    draw_hearts(1570, 40, enemy["hp"])
 
     # Draw message
-    draw_text(message, (50, 850), (100, 0, 255), medium_font)
+    draw_text(message, (80, 860), (255, 255, 255), medium_font)
     
     if current_question and timer_active:
         timer_text = f"Time: {time_remaining}s"
@@ -432,13 +528,16 @@ def draw_battle():
         screen.blit(flash, (draw_x, draw_y))
     else:
         screen.blit(oponent_image, (draw_x, draw_y))
-     
-
     
-    # Draw buttons
+    # Draw buttons (invisible with just text)
     for button in buttons:
-        button.draw(screen)
-
+        # Only draw the text (no button background)
+        text_surface = medium_font.render(button.text, True, (255, 255, 255))
+        text_rect = text_surface.get_rect(center=button.rect.center)
+        screen.blit(text_surface, text_rect)
+        
+        
+        
 def draw_text(text, pos, color=(255, 255, 255), font_obj=None):
     """Draw text with optional custom font, supports multi-line text"""
     if font_obj is None:
@@ -453,16 +552,27 @@ def draw_text(text, pos, color=(255, 255, 255), font_obj=None):
             text_surface = font_obj.render(line, False, color)
             screen.blit(text_surface, (x, y))
         y += font_obj.get_height() + 5 
+
 # Initial button setup
 create_buttons()
 
 # Main game loop
-def run_game():
-    # Initialize game state
-    global running, battle_state, message, player, enemy
+def run_game(create_new_controller=True):
+    global screen, clock, battle_state, message, current_question, choices, right_answer, running, bt_controller, selected_button_index
+    
+    # Initialize Bluetooth controller only if we need to create a new one
+    if create_new_controller:
+        bt_controller = GameController(debug=True)
+        bt_controller.start()
+        
+        # Wait a moment for Bluetooth to initialize
+        time.sleep(1)
+    
     running = True
     battle_state = "player_turn"
     message = "What will you do?"
+    current_question = None
+    selected_button_index = 0  # Track which button is selected by controller
     
     # Reset player and enemy stats
     player = {
@@ -484,6 +594,9 @@ def run_game():
     
     # Main game loop
     last_time = pygame.time.get_ticks()
+    controller_cooldown = 0  # Cooldown for controller input to prevent rapid navigation
+    controller_cooldown_time = 0.2  # Seconds between controller inputs
+    
     while running:
         screen.blit(BP_image, (0, 0)) 
         current_time = pygame.time.get_ticks()
@@ -494,28 +607,58 @@ def run_game():
         update_timer() 
         mouse_pos = pygame.mouse.get_pos()
         
+        # Update controller cooldown
+        if controller_cooldown > 0:
+            controller_cooldown -= dt
+        
+        # Handle Bluetooth controller input
+        if bt_controller.is_connected() and controller_cooldown <= 0:
+            controller_state = bt_controller.update()
+            
+            # Reset all button selections first
+            for button in buttons:
+                button.is_selected = False
+            
+            # Navigate between buttons with X-axis controller
+            if len(buttons) > 0:
+                # Handle horizontal navigation (left/right)
+                if controller_state['moving_left']:
+                    selected_button_index = (selected_button_index - 1) % len(buttons)
+                    controller_cooldown = controller_cooldown_time
+                elif controller_state['moving_right']:
+                    selected_button_index = (selected_button_index + 1) % len(buttons)
+                    controller_cooldown = controller_cooldown_time
+                
+                # Select the current button
+                if 0 <= selected_button_index < len(buttons):
+                    buttons[selected_button_index].is_selected = True
+                
+                # Activate button with Y controller jump or button press
+                if controller_state['jumping'] or controller_state['button_pressed']:
+                    if 0 <= selected_button_index < len(buttons) and buttons[selected_button_index].action:
+                        buttons[selected_button_index].action()
+                        controller_cooldown = controller_cooldown_time
+        
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
 
-            # Handle button hover
+            # Handle button hover with mouse (still keep mouse functionality)
             for button in buttons:
                 button.check_hover(mouse_pos)
                 
-            # Handle button clicks
+            # Handle button clicks with mouse
             if event.type == pygame.MOUSEBUTTONDOWN:
                 for button in buttons:
                     if button.handle_event(event):
                         break
             if battle_state == "showing_explanation":
-                # Wait for player to press continue
                 for event in pygame.event.get():
-                    if event.type == pygame.KEYDOWN and event.key == pygame.K_RETURN:
-                        if enemy["hp"] <= 0:
-                            battle_state = "won"
-                        else:
-                            battle_state = "player_turn" if correct else "enemy_turn"
-                        create_buttons()
+                    if event.type == pygame.QUIT:
+                        running = False
+                    elif event.type == pygame.KEYDOWN:
+                        if event.key == pygame.K_RETURN or event.key == pygame.K_SPACE:
+                            continue_battle()
                     elif event.type == pygame.MOUSEBUTTONDOWN:
                         for button in buttons:
                             if button.handle_event(event):
@@ -553,6 +696,18 @@ def run_game():
         draw_battle()
         pygame.display.flip()
         clock.tick(60)
+
+    # Clean up Bluetooth controller before exiting, but only if we created it
+    if create_new_controller:
+        bt_controller.stop()
+
+# Function to run the game with an existing controller (called from platformer)
+def run_game_with_controller(existing_controller):
+    global bt_controller
+    # Use the existing controller instead of creating a new one
+    bt_controller = existing_controller
+    run_game(create_new_controller=False)
+    # Don't stop the controller when exiting, as it's still needed by the platformer
 
 if __name__ == "__main__":
     # Only run if executed directly (not when imported)
