@@ -7,8 +7,8 @@
         "defense": 0,
         "speed": 4,
         "image": "images/dino4.png",
-        "width": 400,
-        "height":  390
+        "width": 60,
+        "height":  690
       },
       {
         "name": "moloen",

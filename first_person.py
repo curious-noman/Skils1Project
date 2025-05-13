@@ -117,8 +117,7 @@ def draw_wrapped_text(text, rect_params):
 
 abilities={
         "Heal": {"uses": 1, "effect": "heal", "amount": 2},
-        "Fireball": {"uses": 2, "effect": "damage", "amount": 3},
-        "Spear": {"uses": 1, "effect": "defense", "amount": 2}
+        "Double Damage": {"uses": 2, "effect": "damage", "amount": 3}
     }
 player = {
     "name": "clu&blu", 
@@ -266,8 +265,7 @@ def create_buttons():
         
         
 def use_ability(ability_name):
-    global battle_state, message, show_abilities_condetion, is_wand_shaking, wand_shake_duration
-    
+    global battle_state, message, show_abilities_condetion, is_wand_shaking, wand_shake_duration, player
     
     if ability_name in player["abilities"] and player["abilities"][ability_name]["uses"] > 0:
         # Start wand shaking
@@ -280,12 +278,12 @@ def use_ability(ability_name):
         if ability["effect"] == "heal":
             player["hp"] += ability["amount"]
             message = f"{player['name']} used {ability_name}! Healed {ability['amount']} HP!"
-        elif ability["effect"] == "damage":
-            enemy["hp"] -= ability["amount"]
-            message = f"{player['name']} used {ability_name}! Dealt {ability['amount']} damage!"
-        elif ability["effect"] == "defense":
-            player["defense"] += ability["amount"]
-            message = f"{player['name']} used {ability_name}! Defense increased by {ability['amount']}!"
+        elif ability["effect"] == "double_damage":
+            # Store the original attack value if not already doubled
+            if not hasattr(player, 'original_attack'):
+                player.original_attack = player["attack"]
+            player["attack"] = player.original_attack * ability["amount"]
+            message = f"{player['name']} used {ability_name}! Your next attack will do double damage!"
         
         show_abilities_condetion = False
         create_buttons()
@@ -346,7 +344,7 @@ def start_shake(intensity, duration):
     shake_duration = duration
         
 def check_answer():
-    global battle_state, message, player_answer, right_answer, current_question, timer_active
+    global battle_state, message, player_answer, right_answer, current_question, timer_active, player
 
     correct = False
     if not player_answer or not current_question:
@@ -362,25 +360,34 @@ def check_answer():
         
     if correct:
         damage = current_question["attackPower"]
+        # Apply double damage if active
+        if hasattr(player, 'original_attack') and player["attack"] > player.original_attack:
+            damage *= (player["attack"] / player.original_attack)
+            player["attack"] = player.original_attack  # Reset attack after use
+            del player.original_attack
+            
         enemy["hp"] -= damage
         message = f"✅ Correct! {player['name']} attacks for {damage} damage!"
         start_shake(5, 1.2)
-        # Player keeps their turn if correct
         battle_state = "player_turn"
     else:
         message = f"❌ Wrong answer! No attack this turn."
-
         battle_state = "enemy_turn"
-    
 
     timer_active = False
-
     battle_state = "showing_explanation"
     create_buttons()
-    
+#tryyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy
 def player_attack():
-    global battle_state, message
+    global battle_state, message, player
     damage = max(1, player["attack"] - enemy["defense"] // 2)
+    
+    # Apply double damage if active
+    if hasattr(player, 'original_attack') and player["attack"] > player.original_attack:
+        damage *= (player["attack"] / player.original_attack)
+        player["attack"] = player.original_attack  # Reset attack after use
+        del player.original_attack
+        
     enemy["hp"] -= damage
     message = f"{player['name']} attacks for {damage} damage!"
     if enemy["hp"] <= 0:
@@ -566,7 +573,7 @@ def run_game():
     "abilities": {
         "Heal": {"uses": 2, "effect": "heal", "amount": 2},
         "Double Damege": {"uses": 3, "effect": "damage", "amount": 3},
-        "Shield": {"uses": 1, "effect": "defense", "amount": 2}
+        
     }
 }
     enemy = {"name": charecter_list["name"], "hp":charecter_list["hp"],
