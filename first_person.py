@@ -218,10 +218,10 @@ def create_buttons():
         if current_question:
     
             if choices:
-                buttons.append(Button(80, 920, 300, 50, f"A: {choices[0]}", lambda: select_answer(0)))
-                buttons.append(Button(580, 920, 300, 50, f"B: {choices[1]}", lambda: select_answer(1)))
-                buttons.append(Button(80, 990, 300, 50, f"C: {choices[2]}", lambda: select_answer(2)))
-                buttons.append(Button(580, 990, 300, 50, f"D: {choices[3]}", lambda: select_answer(3)))
+                buttons.append(Button(180, 920, 300, 50, f"A: {choices[0]}", lambda: select_answer(0)))
+                buttons.append(Button(750, 920, 300, 50, f"B: {choices[1]}", lambda: select_answer(1)))
+                buttons.append(Button(180, 990, 300, 50, f"C: {choices[2]}", lambda: select_answer(2)))
+                buttons.append(Button(750, 990, 300, 50, f"D: {choices[3]}", lambda: select_answer(3)))
                 
         elif  show_abilities_condetion:
             if abilities:
@@ -278,7 +278,7 @@ def use_ability(ability_name):
         if ability["effect"] == "heal":
             player["hp"] += ability["amount"]
             message = f"{player['name']} used {ability_name}! Healed {ability['amount']} HP!"
-        elif ability["effect"] == "double_damage":
+        elif ability["effect"] == "double_damage":  # Changed from "damage"
             # Store the original attack value if not already doubled
             if not hasattr(player, 'original_attack'):
                 player.original_attack = player["attack"]
@@ -463,13 +463,13 @@ BP_image = pygame.transform.scale(BP, (SCREEN_WIDTH, SCREEN_HEIGHT))
 Wand= pygame.image.load('images/maic_wand.png')
 wand_image = pygame.transform.scale(Wand, (530, 530)) 
 box= pygame.image.load('images/box.png')
-box_image = pygame.transform.scale(box, (950, 240)) 
+box_image = pygame.transform.scale(box, (1050, 240)) 
 
 small_box= pygame.image.load('images/box.png')
 small_box_image = pygame.transform.scale(small_box, (200, 70))
 
 multi_choice_box = pygame.image.load('images/choice_box.png')  
-multi_choice_box_image = pygame.transform.scale(multi_choice_box, (1050, 180))
+multi_choice_box_image = pygame.transform.scale(multi_choice_box, (1250, 180))
 
 EX_box= pygame.image.load('images/box.png')
 EX_box_image = pygame.transform.scale(EX_box, (950, 640))
@@ -565,26 +565,23 @@ def run_game():
     
     # Reset player and enemy stats
     player = {
-    "name": "clu&blu", 
-    "hp": 5, 
-    "attack": 1, 
-    "defense": 0, 
-    "speed": 8,
-    "abilities": {
-        "Heal": {"uses": 2, "effect": "heal", "amount": 2},
-        "Double Damege": {"uses": 3, "effect": "damage", "amount": 3},
-        
+        "name": "clu&blu", 
+        "hp": 5, 
+        "attack": 1, 
+        "defense": 0, 
+        "speed": 8,
+        "abilities": {
+            "Heal": {"uses": 2, "effect": "heal", "amount": 2},
+        }
     }
-}
     enemy = {"name": charecter_list["name"], "hp":charecter_list["hp"],
-         "attack": charecter_list["attack"], "defense": charecter_list["defense"], "speed": charecter_list["speed"]}
+             "attack": charecter_list["attack"], "defense": charecter_list["defense"], "speed": charecter_list["speed"]}
     
     create_buttons()
     
     # Main game loop
     last_time = pygame.time.get_ticks()
     while running:
-        screen.blit(BP_image, (0, 0)) 
         current_time = pygame.time.get_ticks()
         dt = (current_time - last_time) / 1000.0  # Delta time in seconds
         last_time = current_time
@@ -596,6 +593,7 @@ def run_game():
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
+                return "quit"  # Return quit status if window closed
 
             # Handle button hover
             for button in buttons:
@@ -606,39 +604,6 @@ def run_game():
                 for button in buttons:
                     if button.handle_event(event):
                         break
-            if battle_state == "showing_explanation":
-                for event in pygame.event.get():
-                    if event.type == pygame.QUIT:
-                        running = False
-                    elif event.type == pygame.KEYDOWN:
-                        if event.key == pygame.K_RETURN or event.key == pygame.K_SPACE:
-                            continue_battle()
-                    elif event.type == pygame.MOUSEBUTTONDOWN:
-                        for button in buttons:
-                            if button.handle_event(event):
-                                break
-            # Keyboard handling (keeps original functionality)
-            if event.type == pygame.KEYDOWN:
-                if battle_state == "player_turn":
-                    if event.key == pygame.K_1:  # Attack
-                        player_attack_init()
-                    elif event.key == pygame.K_2:  # Defend
-                        player_defend()
-                    elif current_question:  # Only if answering a question
-                        if event.key == pygame.K_RETURN:  # Submit answer
-                            check_answer()
-                        elif event.key == pygame.K_BACKSPACE:
-                            player_answer = player_answer[:-1]
-                        elif event.key in (pygame.K_a, pygame.K_b, pygame.K_c, pygame.K_d):
-                            player_answer = chr(event.key).upper()
-                            check_answer()
-                        elif event.key not in (pygame.K_1, pygame.K_2, pygame.K_3, pygame.K_4):
-                            player_answer += event.unicode
-
-                if event.key == pygame.K_ESCAPE:
-                    running = False  
-                elif battle_state in ["won", "lost"] and event.key == pygame.K_SPACE:
-                    running = False
 
         # Enemy turn
         if battle_state == "enemy_turn":
@@ -647,9 +612,25 @@ def run_game():
             pygame.time.delay(1000)  
             enemy_turn()
         
+        # Check for game over conditions
+        if battle_state == "won":
+            message = f"You defeated {enemy['name']}!"
+            draw_battle()
+            pygame.display.flip()
+            pygame.time.delay(2000)  # Show victory message for 2 seconds
+            return "game_over"  # Return to menu
+            
+        elif battle_state == "lost":
+            message = f"You were defeated by {enemy['name']}!"
+            draw_battle()
+            pygame.display.flip()
+            pygame.time.delay(2000)  # Show defeat message for 2 seconds
+            return "game_over"  # Return to menu
+        
         draw_battle()
         pygame.display.flip()
         clock.tick(60)
+        
 
 if __name__ == "__main__":
     # Only run if executed directly (not when imported)

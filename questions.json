@@ -88,5 +88,275 @@
         "wrong_choice3": "Michelangelo",
         "attackPower": 1,
         "explanation": "Leonardo da Vinci painted the Mona Lisa between 1503-1519. It's now displayed in the Louvre Museum in Paris."
+    },
+    {
+        "question": "What is the hardest natural substance on Earth?",
+        "answer": "Diamond",
+        "wrong_choice1": "Gold",
+        "wrong_choice2": "Iron",
+        "wrong_choice3": "Quartz",
+        "attackPower": 1,
+        "explanation": "Diamond is the hardest known natural material with a rating of 10 on the Mohs scale of mineral hardness."
+    },
+    {
+        "question": "How many continents are there on Earth?",
+        "answer": "7",
+        "wrong_choice1": "5",
+        "wrong_choice2": "6",
+        "wrong_choice3": "8",
+        "attackPower": 1,
+        "explanation": "The seven continents are Africa, Antarctica, Asia, Europe, North America, South America, and Australia/Oceania."
+    },
+    {
+        "question": "Which gas do plants absorb from the atmosphere?",
+        "answer": "Carbon dioxide",
+        "wrong_choice1": "Oxygen",
+        "wrong_choice2": "Nitrogen",
+        "wrong_choice3": "Hydrogen",
+        "attackPower": 1,
+        "explanation": "Plants absorb carbon dioxide (CO₂) during photosynthesis and release oxygen as a byproduct."
+    },
+    {
+        "question": "What is the freezing point of water in Fahrenheit?",
+        "answer": "32°F",
+        "wrong_choice1": "0°F",
+        "wrong_choice2": "100°F",
+        "wrong_choice3": "212°F",
+        "attackPower": 1,
+        "explanation": "Water freezes at 32°F (0°C) and boils at 212°F (100°C) at sea level."
+    },
+    {
+        "question": "Which planet is known as the Red Planet?",
+        "answer": "Mars",
+        "wrong_choice1": "Jupiter",
+        "wrong_choice2": "Venus",
+        "wrong_choice3": "Saturn",
+        "attackPower": 1,
+        "explanation": "Mars appears red due to iron oxide (rust) on its surface and is often called the Red Planet."
+    },
+    {
+        "question": "What is the main component of the Sun?",
+        "answer": "Hydrogen",
+        "wrong_choice1": "Oxygen",
+        "wrong_choice2": "Helium",
+        "wrong_choice3": "Carbon",
+        "attackPower": 1,
+        "explanation": "The Sun is primarily composed of hydrogen (about 70%) and helium (about 28%), with small amounts of other elements."
+    },
+    {
+        "question": "Which ancient civilization built the pyramids?",
+        "answer": "Ancient Egyptians",
+        "wrong_choice1": "Ancient Greeks",
+        "wrong_choice2": "Ancient Romans",
+        "wrong_choice3": "Mayans",
+        "attackPower": 1,
+        "explanation": "The Ancient Egyptians built the pyramids as tombs for pharaohs, with the Great Pyramid of Giza being the most famous."
+    },
+    {
+        "question": "What is the largest mammal on Earth?",
+        "answer": "Blue whale",
+        "wrong_choice1": "Elephant",
+        "wrong_choice2": "Giraffe",
+        "wrong_choice3": "Polar bear",
+        "attackPower": 1,
+        "explanation": "The blue whale is the largest animal ever known to have existed, reaching up to 100 feet (30 meters) in length."
+    },
+    {
+        "question": "Which of these is NOT a type of cloud?",
+        "answer": "Plutonimbus",
+        "wrong_choice1": "Cumulus",
+        "wrong_choice2": "Stratus",
+        "wrong_choice3": "Cirrus",
+        "attackPower": 1,
+        "explanation": "The main cloud types are cumulus, stratus, cirrus, and nimbus. 'Plutonimbus' is not a real cloud type."
+    },
+    {
+        "question": "What is the chemical symbol for gold?",
+        "answer": "Au",
+        "wrong_choice1": "Ag",
+        "wrong_choice2": "Go",
+        "wrong_choice3": "Gd",
+        "attackPower": 1,
+        "explanation": "The symbol Au comes from the Latin word for gold, 'aurum'. Ag is silver, Gd is gadolinium."
+    },
+    {
+        "question": "Which of these is a conductor of electricity?",
+        "answer": "Copper",
+        "wrong_choice1": "Rubber",
+        "wrong_choice2": "Plastic",
+        "wrong_choice3": "Wood",
+        "attackPower": 1,
+        "explanation": "Copper is an excellent conductor of electricity, which is why it's used in electrical wiring."
+    },
+    {
+        "question": "What is the capital of Canada?",
+        "answer": "Ottawa",
+        "wrong_choice1": "Toronto",
+        "wrong_choice2": "Montreal",
+        "wrong_choice3": "Vancouver",
+        "attackPower": 1,
+        "explanation": "While Toronto is the largest city, Ottawa has been Canada's capital since 1857."
+    },
+    {
+        "question": "Which of these is NOT a primary color of light?",
+        "answer": "Yellow",
+        "wrong_choice1": "Red",
+        "wrong_choice2": "Green",
+        "wrong_choice3": "Blue",
+        "attackPower": 1,
+        "explanation": "The primary colors of light are red, green, and blue (RGB). Yellow is a secondary color made by mixing red and green light."
+    },
+    {
+        "question": "What is the largest ocean on Earth?",
+        "answer": "Pacific Ocean",
+        "wrong_choice1": "Atlantic Ocean",
+        "wrong_choice2": "Indian Ocean",
+        "wrong_choice3": "Arctic Ocean",
+        "attackPower": 1,
+        "explanation": "The Pacific Ocean covers about 63 million square miles, more than all the land area on Earth combined."
+    },
+    {
+        "question": "Which planet has the most moons?",
+        "answer": "Jupiter",
+        "wrong_choice1": "Saturn",
+        "wrong_choice2": "Mars",
+        "wrong_choice3": "Neptune",
+        "attackPower": 1,
+        "explanation": "As of 2023, Jupiter has at least 92 known moons, more than any other planet in our solar system."
+    },
+    {
+        "question": "What is the square of 9?",
+        "answer": "81",
+        "wrong_choice1": "18",
+        "wrong_choice2": "27",
+        "wrong_choice3": "36",
+        "attackPower": 1,
+        "explanation": "To square a number means to multiply it by itself. 9 × 9 = 81."
+    },
+    {
+        "question": "Which of these is NOT a layer of the Earth's atmosphere?",
+        "answer": "Lithosphere",
+        "wrong_choice1": "Troposphere",
+        "wrong_choice2": "Stratosphere",
+        "wrong_choice3": "Mesosphere",
+        "attackPower": 1,
+        "explanation": "The lithosphere is Earth's rigid outer layer (crust and upper mantle), not part of the atmosphere."
+    },
+    {
+        "question": "Who wrote 'Romeo and Juliet'?",
+        "answer": "William Shakespeare",
+        "wrong_choice1": "Charles Dickens",
+        "wrong_choice2": "Jane Austen",
+        "wrong_choice3": "Mark Twain",
+        "attackPower": 1,
+        "explanation": "William Shakespeare wrote this famous tragedy about two young lovers in the late 16th century."
+    },
+    {
+        "question": "What is the process by which plants make their own food called?",
+        "answer": "Photosynthesis",
+        "wrong_choice1": "Respiration",
+        "wrong_choice2": "Transpiration",
+        "wrong_choice3": "Fermentation",
+        "attackPower": 1,
+        "explanation": "Photosynthesis converts sunlight, carbon dioxide, and water into glucose and oxygen."
+    },
+    {
+        "question": "Which country is both a continent and a country?",
+        "answer": "Australia",
+        "wrong_choice1": "New Zealand",
+        "wrong_choice2": "South Africa",
+        "wrong_choice3": "Brazil",
+        "attackPower": 1,
+        "explanation": "Australia is the only country that occupies an entire continent."
+    },
+    {
+        "question": "What is the smallest prime number?",
+        "answer": "2",
+        "wrong_choice1": "1",
+        "wrong_choice2": "3",
+        "wrong_choice3": "5",
+        "attackPower": 1,
+        "explanation": "2 is the smallest and only even prime number. 1 is not considered a prime number."
+    },
+    {
+        "question": "Which of these is NOT a type of rock?",
+        "answer": "Magma",
+        "wrong_choice1": "Igneous",
+        "wrong_choice2": "Sedimentary",
+        "wrong_choice3": "Metamorphic",
+        "attackPower": 1,
+        "explanation": "The three main rock types are igneous, sedimentary, and metamorphic. Magma is molten rock beneath Earth's surface."
+    },
+    {
+        "question": "What is 3/4 expressed as a percentage?",
+        "answer": "75%",
+        "wrong_choice1": "25%",
+        "wrong_choice2": "50%",
+        "wrong_choice3": "100%",
+        "attackPower": 1,
+        "explanation": "To convert a fraction to percentage, divide numerator by denominator and multiply by 100. 3 ÷ 4 × 100 = 75%."
+    },
+    {
+        "question": "Which famous scientist developed the theory of relativity?",
+        "answer": "Albert Einstein",
+        "wrong_choice1": "Isaac Newton",
+        "wrong_choice2": "Galileo Galilei",
+        "wrong_choice3": "Marie Curie",
+        "attackPower": 1,
+        "explanation": "Albert Einstein published his theory of relativity in 1905, revolutionizing our understanding of space and time."
+    },
+    {
+        "question": "What is the main gas that makes up Earth's atmosphere?",
+        "answer": "Nitrogen",
+        "wrong_choice1": "Oxygen",
+        "wrong_choice2": "Carbon dioxide",
+        "wrong_choice3": "Hydrogen",
+        "attackPower": 1,
+        "explanation": "Earth's atmosphere is about 78% nitrogen and 21% oxygen, with trace amounts of other gases."
+    },
+    {
+        "question": "Which of these is NOT a vertebrate?",
+        "answer": "Octopus",
+        "wrong_choice1": "Dog",
+        "wrong_choice2": "Eagle",
+        "wrong_choice3": "Frog",
+        "attackPower": 1,
+        "explanation": "Octopuses are invertebrates (no backbone), while dogs, eagles, and frogs all have backbones."
+    },
+    {
+        "question": "What is the capital of Brazil?",
+        "answer": "Brasília",
+        "wrong_choice1": "Rio de Janeiro",
+        "wrong_choice2": "São Paulo",
+        "wrong_choice3": "Buenos Aires",
+        "attackPower": 1,
+        "explanation": "Brasília became Brazil's capital in 1960, replacing Rio de Janeiro. Buenos Aires is in Argentina."
+    },
+    {
+        "question": "Which of these is NOT a unit of time?",
+        "answer": "Light-year",
+        "wrong_choice1": "Second",
+        "wrong_choice2": "Minute",
+        "wrong_choice3": "Hour",
+        "attackPower": 1,
+        "explanation": "A light-year measures distance (how far light travels in a year), not time."
+    },
+    {
+        "question": "What is the value of π (pi) rounded to two decimal places?",
+        "answer": "3.14",
+        "wrong_choice1": "2.71",
+        "wrong_choice2": "1.61",
+        "wrong_choice3": "4.13",
+        "attackPower": 1,
+        "explanation": "Pi is the ratio of a circle's circumference to its diameter, approximately 3.14159..."
+    },
+    {
+        "question": "Which of these is NOT a state of matter?",
+        "answer": "Energy",
+        "wrong_choice1": "Solid",
+        "wrong_choice2": "Liquid",
+        "wrong_choice3": "Gas",
+        "attackPower": 1,
+        "explanation": "The main states of matter are solid, liquid, gas, and plasma. Energy is not a state of matter."
     }
 ]

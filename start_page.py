@@ -58,11 +58,16 @@ def show_instructions():
         pygame.display.update()
 
 def play():
-    show_instructions()# this will be your actual game loop
-    result = run_game()
-    if result == "quit":
-        main_menu()
+    show_instructions()  # Show instructions first
+    result = run_game()  # Run the game
     
+    # After game ends (won/lost/quit), return to main menu
+    if result == "game_over":
+        main_menu()  # Automatically return to main menu
+    elif result == "quit":
+        pygame.quit()
+        sys.exit()
+        
 def options():
     while True:
         OPTIONS_MOUSE_POS = pygame.mouse.get_pos()

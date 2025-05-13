@@ -9,25 +9,5 @@
         "image": "images/dino4.png",
         "width": 60,
         "height":  690
-      },
-      {
-        "name": "moloen",
-        "hp": 3,
-        "attack": 1,
-        "defense": 0,
-        "speed": 6,
-        "image": "images/blimp4.png",
-        "width": 400,
-        "height":  390
-      },
-      {
-        "name": "Wierd ship",
-        "hp": 5,
-        "attack": 1,
-        "defense": 0,
-        "speed": 4,
-        "image": "images/ufo2.png",
-        "width": 400,
-        "height":  390
       }
 ]
