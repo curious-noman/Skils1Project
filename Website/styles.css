@@ -29,6 +29,25 @@
     }
 }
 
+@media (max-width: 600px) {
+    .logo-left {
+        position: static;
+        transform: none;
+        margin: 0 auto 10px auto;
+        display: block;
+    }
+
+    .header-container {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+    }
+
+    .logo-text {
+        font-size: 2rem;
+    }
+}
+
 * {
     margin: 0;
     padding: 0;
@@ -79,19 +98,26 @@ header {
     margin-bottom: 20px;
 }
 
+.logo-left {
+    position: absolute;
+    left: 10px;
+    top: 6.5%;
+    transform: translateY(-50%);
+    padding-left: 10px;
+}
+
 .logo {
     width: 80px;
     height: 80px;
-    background-color: var(--accent-neon);
-    border-radius: 0; /* Sharper edges */
     display: flex;
     align-items: center;
     justify-content: center;
-    margin-right: 15px;
-    border: 3px solid var(--text-primary);
+
 }
 
 .logo-text {
+    flex-grow: 1;
+    text-align: center;
     color: var(--text-primary);
     font-size: 2.5rem;
     font-weight: bold;
