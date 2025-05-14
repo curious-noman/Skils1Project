@@ -177,14 +177,34 @@ class Button:
         self.is_selected = False  # For controller navigation
         
     def draw(self, screen):
-        # Use hover color if hovered by mouse or selected by controller
-        color = self.hover_color if (self.is_hovered or self.is_selected) else self.color
-        pygame.draw.rect(screen, color, self.rect)
-        # Draw a thicker border if selected by controller
-        border_width = 4 if self.is_selected else 2
-        pygame.draw.rect(screen, (255, 255, 255), self.rect, border_width)
+        # Use different colors based on selection state
+        if self.is_selected:
+            # Neon green for selected buttons (retro game aesthetic)
+            border_color = (0, 255, 0)  # Neon green border
+            bg_color = (20, 60, 20)      # Darker green background
+            border_width = 4             # Thicker border
+            
+            # Draw button with neon effect
+            pygame.draw.rect(screen, bg_color, self.rect)  # Background
+            pygame.draw.rect(screen, border_color, self.rect, border_width)  # Neon border
+            
+            # Add a second border for a more pronounced effect
+            inner_rect = pygame.Rect(self.rect.x + 2, self.rect.y + 2, 
+                                    self.rect.width - 4, self.rect.height - 4)
+            pygame.draw.rect(screen, (0, 200, 0), inner_rect, 1)  # Inner border
+            
+            # Brighter text for selected buttons
+            text_surface = medium_font.render(self.text, True, (255, 255, 255))
+        else:
+            # Normal button appearance
+            color = self.hover_color if self.is_hovered else self.color
+            pygame.draw.rect(screen, color, self.rect)
+            pygame.draw.rect(screen, (100, 100, 100), self.rect, 2)  # Normal border
+            
+            # Normal text
+            text_surface = medium_font.render(self.text, True, (220, 220, 220))
         
-        text_surface = medium_font.render(self.text, True, (255, 255, 255))
+        # Draw text
         text_rect = text_surface.get_rect(center=self.rect.center)
         screen.blit(text_surface, text_rect)
         
@@ -539,11 +559,25 @@ def draw_battle():
     
     # Draw buttons (invisible with just text)
     for button in buttons:
-        # Only draw the text (no button background)
+        # First draw selection highlight if button is selected by controller
+        if button.is_selected:
+            # Neon green for selected buttons (retro game aesthetic)
+            border_color = (0, 255, 0)  # Neon green border
+            bg_color = (20, 60, 20)      # Darker green background
+            
+            # Draw button with neon effect
+            pygame.draw.rect(screen, bg_color, button.rect)  # Background
+            pygame.draw.rect(screen, border_color, button.rect, 4)  # Neon border
+            
+            # Add a second border for a more pronounced effect
+            inner_rect = pygame.Rect(button.rect.x + 2, button.rect.y + 2, 
+                                    button.rect.width - 4, button.rect.height - 4)
+            pygame.draw.rect(screen, (0, 200, 0), inner_rect, 1)  # Inner border
+        
+        # Then draw the text (original code)
         text_surface = medium_font.render(button.text, True, (255, 255, 255))
         text_rect = text_surface.get_rect(center=button.rect.center)
         screen.blit(text_surface, text_rect)
-        
         
         
 def draw_text(text, pos, color=(255, 255, 255), font_obj=None):
